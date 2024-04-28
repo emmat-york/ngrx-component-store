@@ -1,6 +1,9 @@
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ReactiveState } from './interfaces/custom-component-store.interface';
 import { Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
+
+export type ReactiveState<State extends object> = {
+  [Key in keyof State]: BehaviorSubject<State[Key]>;
+};
 
 const EMPTY_TOKEN = new InjectionToken<undefined>(
   'EMPTY_TOKEN_FOR_COMPONENT_STORE',
