@@ -1,3 +1,29 @@
-<form [formGroup]="formGroup">
-    <input type="text" name="" id="" />
+<form class="form-group" [formGroup]="formGroup">
+    <div class="control-container">
+        <label for="name">Name:</label>
+        <input formControlName="name" type="text" id="name" />
+    </div>
+
+    <div class="control-container">
+        <label for="sureName">Sure name:</label>
+        <input formControlName="sureName" type="text" id="sureName" />
+    </div>
+
+    <div class="control-container">
+        <label for="birthDate">Birth date:</label>
+        <input formControlName="birthDate" type="date" id="birthDate" />
+    </div>
+
+    <div class="control-container">
+        <label for="address">Address:</label>
+        <input formControlName="address" type="text" id="address" />
+    </div>
+
+    <div class="control-container" formGroupName="carData"></div>
+
+
+    <div class="control-container">
+        <label for="age">Age:</label>
+        <input formControlName="age" type="number" id="age" />
+    </div>
 </form>

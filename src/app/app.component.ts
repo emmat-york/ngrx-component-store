@@ -6,8 +6,15 @@ import {AppComponentStore, CarData} from "./app-component.store";
   selector: 'app-root',
   standalone: true,
   templateUrl: 'app.component.html',
-  styles: ``,
+  styles: `.control-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 10px;
+  }
+  `,
   imports: [ReactiveFormsModule],
+  providers: [AppComponentStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
@@ -18,7 +25,14 @@ export class AppComponent {
   readonly carData$ = this.appComponentStore.carData$;
   readonly age$ = this.appComponentStore.age$;
 
-  readonly formGroup = this.formBuilder.nonNullable.group({});
+  readonly formGroup = this.formBuilder.nonNullable.group({
+    name: [''],
+    sureName: [''],
+    birthDate: [''],
+    address: [''],
+    carData: this.formBuilder.nonNullable.group({}),
+    age: [null],
+  });
 
   constructor(private readonly appComponentStore: AppComponentStore, private readonly formBuilder: FormBuilder) {}
 

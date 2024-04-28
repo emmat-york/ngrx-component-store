@@ -1,4 +1,5 @@
 import {CustomComponentStore} from "./custom-component-store/custom-component-store";
+import {Injectable} from "@angular/core";
 
 interface AppStoreState {
     name: string;
@@ -24,6 +25,7 @@ const INITIAL_STATE: AppStoreState = {
     age: null,
 };
 
+@Injectable()
 export class AppComponentStore extends CustomComponentStore<AppStoreState> {
     readonly name$ = this.select(state => state.name);
     readonly sureName$ = this.select(state => state.sureName);
