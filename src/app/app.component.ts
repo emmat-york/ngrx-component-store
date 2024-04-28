@@ -1,7 +1,7 @@
-import {ChangeDetectionStrategy, Component} from '@angular/core';
-import {FormBuilder, ReactiveFormsModule} from "@angular/forms";
-import {AppComponentStore, CarData} from "./app-component.store";
-import {AsyncPipe} from "@angular/common";
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { AppComponentStore, CarData } from './app-component.store';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'app-root',
@@ -29,7 +29,10 @@ export class AppComponent {
     age: [null],
   });
 
-  constructor(private readonly appComponentStore: AppComponentStore, private readonly formBuilder: FormBuilder) {}
+  constructor(
+    private readonly appComponentStore: AppComponentStore,
+    private readonly formBuilder: FormBuilder,
+  ) {}
 
   setName(): void {
     this.appComponentStore.setName(this.formGroup.getRawValue().name);

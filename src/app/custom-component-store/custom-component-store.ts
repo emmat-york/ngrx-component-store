@@ -1,8 +1,10 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ReactiveState } from './interfaces/custom-component-store.interface';
-import {Inject, Injectable, InjectionToken, OnDestroy} from "@angular/core";
+import { Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 
-const EMPTY_TOKEN = new InjectionToken<undefined>('EMPTY_TOKEN_FOR_COMPONENT_STORE');
+const EMPTY_TOKEN = new InjectionToken<undefined>(
+  'EMPTY_TOKEN_FOR_COMPONENT_STORE',
+);
 
 @Injectable()
 export class CustomComponentStore<State extends object> implements OnDestroy {

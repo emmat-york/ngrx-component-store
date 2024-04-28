@@ -1,60 +1,60 @@
 <form class="form-group" [formGroup]="formGroup">
-    <h1 class="heading">Form</h1>
+  <h1 class="heading">Form</h1>
 
-    <div class="control-container">
-        <label for="name">Name:</label>
-        <input formControlName="name" type="text" id="name" />
+  <div class="control-container">
+    <label for="name">Name:</label>
+    <input formControlName="name" type="text" id="name" />
 
-        <div class="value-container">
-            <button type="button" (click)="setName()">Save value</button>
-            <span>Saved value:</span>
-            <span class="saved-value">{{ name$ | async }}</span>
-        </div>
+    <div class="value-container">
+      <button type="button" (click)="setName()">Save value</button>
+      <span>Saved value:</span>
+      <span class="saved-value">{{ name$ | async }}</span>
     </div>
+  </div>
 
-    <div class="control-container">
-        <label for="sureName">Sure name:</label>
-        <input formControlName="sureName" type="text" id="sureName" />
+  <div class="control-container">
+    <label for="sureName">Sure name:</label>
+    <input formControlName="sureName" type="text" id="sureName" />
 
-        <div class="value-container">
-            <button type="button" (click)="setSureName()">Save value</button>
-            <span>Saved value:</span>
-            <span class="saved-value">{{ sureName$ | async }}</span>
-        </div>
+    <div class="value-container">
+      <button type="button" (click)="setSureName()">Save value</button>
+      <span>Saved value:</span>
+      <span class="saved-value">{{ sureName$ | async }}</span>
     </div>
+  </div>
 
-    <div class="control-container">
-        <label for="birthDate">Birth date:</label>
-        <input formControlName="birthDate" type="date" id="birthDate" />
+  <div class="control-container">
+    <label for="birthDate">Birth date:</label>
+    <input formControlName="birthDate" type="date" id="birthDate" />
 
-        <div class="value-container">
-            <button type="button" (click)="setBirthDate()">Save value</button>
-            <span>Saved value:</span>
-            <span class="saved-value">{{ birthDate$ | async }}</span>
-        </div>
+    <div class="value-container">
+      <button type="button" (click)="setBirthDate()">Save value</button>
+      <span>Saved value:</span>
+      <span class="saved-value">{{ birthDate$ | async }}</span>
     </div>
+  </div>
 
-    <div class="control-container">
-        <label for="address">Address:</label>
-        <input formControlName="address" type="text" id="address" />
+  <div class="control-container">
+    <label for="address">Address:</label>
+    <input formControlName="address" type="text" id="address" />
 
-        <div class="value-container">
-            <button type="button" (click)="setAddress()">Save value</button>
-            <span>Saved value:</span>
-            <span class="saved-value">{{ address$ | async }}</span>
-        </div>
+    <div class="value-container">
+      <button type="button" (click)="setAddress()">Save value</button>
+      <span>Saved value:</span>
+      <span class="saved-value">{{ address$ | async }}</span>
     </div>
+  </div>
 
-    <div class="control-container" formGroupName="carData"></div>
+  <div class="control-container" formGroupName="carData"></div>
 
-    <div class="control-container">
-        <label for="age">Age:</label>
-        <input formControlName="age" type="number" id="age" />
+  <div class="control-container">
+    <label for="age">Age:</label>
+    <input formControlName="age" type="number" id="age" />
 
-        <div class="value-container">
-            <button type="button" (click)="setAge()">Save value</button>
-            <span >Saved value:</span>
-            <span class="saved-value">{{ age$ | async }}</span>
-        </div>
+    <div class="value-container">
+      <button type="button" (click)="setAge()">Save value</button>
+      <span>Saved value:</span>
+      <span class="saved-value">{{ age$ | async }}</span>
     </div>
+  </div>
 </form>
