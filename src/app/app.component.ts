@@ -1,19 +1,14 @@
 import {ChangeDetectionStrategy, Component} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule} from "@angular/forms";
 import {AppComponentStore, CarData} from "./app-component.store";
+import {AsyncPipe} from "@angular/common";
 
 @Component({
   selector: 'app-root',
   standalone: true,
   templateUrl: 'app.component.html',
-  styles: `.control-container {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin: 10px;
-  }
-  `,
-  imports: [ReactiveFormsModule],
+  styleUrl: 'app.component.scss',
+  imports: [ReactiveFormsModule, AsyncPipe],
   providers: [AppComponentStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,27 +31,27 @@ export class AppComponent {
 
   constructor(private readonly appComponentStore: AppComponentStore, private readonly formBuilder: FormBuilder) {}
 
-  setName(name: string): void {
-    this.appComponentStore.setName(name);
+  setName(): void {
+    this.appComponentStore.setName(this.formGroup.getRawValue().name);
   }
 
-  setSureName(sureName: string): void {
-    this.appComponentStore.setSureName(sureName);
+  setSureName(): void {
+    this.appComponentStore.setSureName(this.formGroup.getRawValue().sureName);
   }
 
-  setBirthDate(birthDate: string): void {
-    this.appComponentStore.setBirthDate(birthDate);
+  setBirthDate(): void {
+    this.appComponentStore.setBirthDate(this.formGroup.getRawValue().birthDate);
   }
 
-  setAddress(address: string): void {
-    this.appComponentStore.setAddress(address);
+  setAddress(): void {
+    this.appComponentStore.setAddress(this.formGroup.getRawValue().address);
   }
 
   setCarData(carData: CarData | null): void {
     this.appComponentStore.setCarData(carData);
   }
 
-  setAge(age: number | null): void {
-    this.appComponentStore.setAge(age);
+  setAge(): void {
+    this.appComponentStore.setAge(this.formGroup.getRawValue().age);
   }
 }
