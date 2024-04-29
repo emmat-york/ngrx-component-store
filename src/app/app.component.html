@@ -45,8 +45,6 @@
     </div>
   </div>
 
-  <div class="control-container" formGroupName="carData"></div>
-
   <div class="control-container">
     <label for="age">Age:</label>
     <input formControlName="age" type="number" id="age" />
@@ -55,6 +53,53 @@
       <button type="button" (click)="setAge()">Save value</button>
       <span>Saved value:</span>
       <span class="saved-value">{{ age$ | async }}</span>
+    </div>
+  </div>
+
+  <div
+    *ngIf="carData$ | async as carData"
+    class="control-container car-data"
+    formGroupName="carData"
+  >
+    <h2>Car data</h2>
+
+    <div class="control-container">
+      <label for="mark">Mark:</label>
+      <input formControlName="mark" type="text" id="mark" />
+
+      <div class="value-container">
+        <button type="button" (click)="setCarMark()">Save value</button>
+        <span>Saved value:</span>
+        <span class="saved-value">{{ carData.mark }}</span>
+      </div>
+    </div>
+
+    <div class="control-container">
+      <label for="yearOfProduction">Year of production:</label>
+      <input
+        formControlName="yearOfProduction"
+        type="date"
+        id="yearOfProduction"
+      />
+
+      <div class="value-container">
+        <button type="button" (click)="setCarsYearOfProduction()">
+          Save value
+        </button>
+        <span>Saved value:</span>
+        <span class="saved-value">{{ carData.yearOfProduction }}</span>
+      </div>
+    </div>
+
+    <div class="control-container">
+      <label for="isElectric">Is electric?</label>
+      <input type="checkbox" formControlName="isElectric" id="isElectric" />
+
+      <div class="value-container">
+        <button type="button" (click)="setIsElectric()">Save value</button>
+        <span>Saved value:</span>
+        <span class="saved-value">{{ carData.isElectric }}</span>
+      </div>
     </div>
   </div>
 </form>

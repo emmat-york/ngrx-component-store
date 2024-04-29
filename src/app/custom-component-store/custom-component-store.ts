@@ -20,6 +20,8 @@ export class CustomComponentStore<State extends object> implements OnDestroy {
     for (const key in state) {
       this._state[key] = this.getPropAsBehaviourSubject(state, key);
     }
+
+    Object.freeze(this._state);
   }
 
   protected get state$(): Observable<State> {
@@ -45,7 +47,10 @@ export class CustomComponentStore<State extends object> implements OnDestroy {
   }
 
   protected setState(setFn: (state: State) => State): void {
-    const stateSubjectUpdatedState = setFn(this.stateSubject$.getValue());
+    const currentState = this.stateSubject$.getValue();
+    const frozenState = Object.freeze(currentState);
+    const stateSubjectUpdatedState = setFn(frozenState);
+
     this.stateSubject$.next(stateSubjectUpdatedState);
 
     for (const key in stateSubjectUpdatedState) {

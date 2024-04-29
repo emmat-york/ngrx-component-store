@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { AppComponentStore, CarData } from './app-component.store';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   templateUrl: 'app.component.html',
   styleUrl: 'app.component.scss',
-  imports: [ReactiveFormsModule, AsyncPipe],
+  imports: [ReactiveFormsModule, AsyncPipe, NgIf],
   providers: [AppComponentStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -25,8 +25,12 @@ export class AppComponent {
     sureName: [''],
     birthDate: [''],
     address: [''],
-    carData: this.formBuilder.nonNullable.group({}),
     age: [null],
+    carData: this.formBuilder.nonNullable.group({
+      mark: [''],
+      yearOfProduction: [null],
+      isElectric: [false],
+    }),
   });
 
   constructor(
@@ -50,8 +54,22 @@ export class AppComponent {
     this.appComponentStore.setAddress(this.formGroup.getRawValue().address);
   }
 
-  setCarData(carData: CarData | null): void {
-    this.appComponentStore.setCarData(carData);
+  setCarMark(): void {
+    this.appComponentStore.setCarMark(
+      this.formGroup.getRawValue().carData.mark,
+    );
+  }
+
+  setCarsYearOfProduction(): void {
+    this.appComponentStore.setCarsYearOfProduction(
+      this.formGroup.getRawValue().carData.yearOfProduction,
+    );
+  }
+
+  setIsElectric(): void {
+    this.appComponentStore.setIsElectric(
+      this.formGroup.getRawValue().carData.isElectric,
+    );
   }
 
   setAge(): void {

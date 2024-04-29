@@ -6,13 +6,13 @@ interface AppStoreState {
   sureName: string;
   birthDate: string;
   address: string;
-  carData: CarData | null;
+  carData: CarData;
   age: number | null;
 }
 
 export interface CarData {
   mark: string;
-  yearOfProduction: number;
+  yearOfProduction: string | null;
   isElectric: boolean;
 }
 
@@ -21,7 +21,11 @@ const INITIAL_STATE: AppStoreState = {
   sureName: '',
   birthDate: '',
   address: '',
-  carData: null,
+  carData: {
+    mark: '',
+    yearOfProduction: null,
+    isElectric: false,
+  },
   age: null,
 };
 
@@ -54,8 +58,28 @@ export class AppComponentStore extends CustomComponentStore<AppStoreState> {
     this.setState(state => ({ ...state, address }));
   }
 
-  setCarData(carData: CarData | null): void {
-    this.setState(state => ({ ...state, carData }));
+  setCarMark(mark: string): void {
+    this.setState(state => ({ ...state, carData: { ...state.carData, mark } }));
+  }
+
+  setCarsYearOfProduction(yearOfProduction: string | null): void {
+    this.setState(state => ({
+      ...state,
+      carData: {
+        ...state.carData,
+        yearOfProduction,
+      },
+    }));
+  }
+
+  setIsElectric(isElectric: boolean): void {
+    this.setState(state => ({
+      ...state,
+      carData: {
+        ...state.carData,
+        isElectric,
+      },
+    }));
   }
 
   setAge(age: number | null): void {
