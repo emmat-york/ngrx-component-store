@@ -3,13 +3,26 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { AppComponentStore } from './app-component.store';
 import { AsyncPipe, NgIf } from '@angular/common';
 
+interface AppFormGroup {
+  name: string;
+  sureName: string;
+  birthDate: string;
+  address: string;
+  age: number | null;
+  carData: {
+    mark: string;
+    yearOfProduction: string | null;
+    isElectric: boolean;
+  };
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
   templateUrl: 'app.component.html',
   styleUrl: 'app.component.scss',
-  imports: [ReactiveFormsModule, AsyncPipe, NgIf],
   providers: [AppComponentStore],
+  imports: [ReactiveFormsModule, AsyncPipe, NgIf],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
@@ -38,41 +51,41 @@ export class AppComponent {
     private readonly formBuilder: FormBuilder,
   ) {}
 
+  get formState(): AppFormGroup {
+    return this.formGroup.getRawValue();
+  }
+
   setName(): void {
-    this.appComponentStore.setName(this.formGroup.getRawValue().name);
+    this.appComponentStore.setName(this.formState.name);
   }
 
   setSureName(): void {
-    this.appComponentStore.setSureName(this.formGroup.getRawValue().sureName);
+    this.appComponentStore.setSureName(this.formState.sureName);
   }
 
   setBirthDate(): void {
-    this.appComponentStore.setBirthDate(this.formGroup.getRawValue().birthDate);
+    this.appComponentStore.setBirthDate(this.formState.birthDate);
   }
 
   setAddress(): void {
-    this.appComponentStore.setAddress(this.formGroup.getRawValue().address);
+    this.appComponentStore.setAddress(this.formState.address);
   }
 
   setCarMark(): void {
-    this.appComponentStore.setCarMark(
-      this.formGroup.getRawValue().carData.mark,
-    );
+    this.appComponentStore.setCarMark(this.formState.carData.mark);
   }
 
   setCarsYearOfProduction(): void {
     this.appComponentStore.setCarsYearOfProduction(
-      this.formGroup.getRawValue().carData.yearOfProduction,
+      this.formState.carData.yearOfProduction,
     );
   }
 
   setIsElectric(): void {
-    this.appComponentStore.setIsElectric(
-      this.formGroup.getRawValue().carData.isElectric,
-    );
+    this.appComponentStore.setIsElectric(this.formState.carData.isElectric);
   }
 
   setAge(): void {
-    this.appComponentStore.setAge(this.formGroup.getRawValue().age);
+    this.appComponentStore.setAge(this.formState.age);
   }
 }
