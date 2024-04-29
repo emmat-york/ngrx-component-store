@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { AppComponentStore, CarData } from './app-component.store';
+import { AppComponentStore } from './app-component.store';
 import { AsyncPipe, NgIf } from '@angular/common';
 
 @Component({
