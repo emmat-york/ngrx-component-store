@@ -1,20 +1,14 @@
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 
 export type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
 
-const EMPTY_TOKEN = new InjectionToken<undefined>(
-  'EMPTY_TOKEN_FOR_COMPONENT_STORE',
-);
-
-@Injectable()
-export class CustomComponentStore<State extends object> implements OnDestroy {
+export class CustomStore<State extends object> {
   private readonly _state: ReactiveState<State> = {} as ReactiveState<State>;
   private readonly stateSubject$: BehaviorSubject<State>;
 
-  protected constructor(@Inject(EMPTY_TOKEN) state: State) {
+  protected constructor(state: State) {
     this.stateSubject$ = new BehaviorSubject<State>(state);
 
     for (const key in state) {
@@ -32,7 +26,7 @@ export class CustomComponentStore<State extends object> implements OnDestroy {
     return this.stateSubject$.getValue();
   }
 
-  ngOnDestroy(): void {
+  protected onDestroy(): void {
     for (const key in this._state) {
       this._state[key].complete();
     }

@@ -51,41 +51,41 @@ export class AppComponent {
     private readonly formBuilder: FormBuilder,
   ) {}
 
-  get formState(): AppFormGroup {
+  get formValue(): AppFormGroup {
     return this.formGroup.getRawValue();
   }
 
   setName(): void {
-    this.appComponentStore.setName(this.formState.name);
+    this.appComponentStore.setName(this.formValue.name);
   }
 
   setSureName(): void {
-    this.appComponentStore.setSureName(this.formState.sureName);
+    this.appComponentStore.setSureName(this.formValue.sureName);
   }
 
   setBirthDate(): void {
-    this.appComponentStore.setBirthDate(this.formState.birthDate);
+    this.appComponentStore.setBirthDate(this.formValue.birthDate);
   }
 
   setAddress(): void {
-    this.appComponentStore.setAddress(this.formState.address);
+    this.appComponentStore.setAddress(this.formValue.address);
   }
 
   setCarMark(): void {
-    this.appComponentStore.setCarMark(this.formState.carData.mark);
+    this.appComponentStore.setCarMark(this.formValue.carData.mark);
   }
 
   setCarsYearOfProduction(): void {
     this.appComponentStore.setCarsYearOfProduction(
-      this.formState.carData.yearOfProduction,
+      this.formValue.carData.yearOfProduction,
     );
   }
 
   setIsElectric(): void {
-    this.appComponentStore.setIsElectric(this.formState.carData.isElectric);
+    this.appComponentStore.setIsElectric(this.formValue.carData.isElectric);
   }
 
   setAge(): void {
-    this.appComponentStore.setAge(this.formState.age);
+    this.appComponentStore.setAge(this.formValue.age);
   }
 }

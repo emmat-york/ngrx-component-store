@@ -1,5 +1,5 @@
-import { CustomComponentStore } from './custom-component-store/custom-component-store';
-import { Injectable } from '@angular/core';
+import { CustomStore } from './custom-store/custom-store';
+import { Injectable, OnDestroy } from '@angular/core';
 
 interface AppStoreState {
   name: string;
@@ -30,7 +30,10 @@ const INITIAL_STATE: AppStoreState = {
 };
 
 @Injectable()
-export class AppComponentStore extends CustomComponentStore<AppStoreState> {
+export class AppComponentStore
+  extends CustomStore<AppStoreState>
+  implements OnDestroy
+{
   readonly name$ = this.select(state => state.name);
   readonly sureName$ = this.select(state => state.sureName);
   readonly birthDate$ = this.select(state => state.birthDate);
@@ -40,6 +43,10 @@ export class AppComponentStore extends CustomComponentStore<AppStoreState> {
 
   constructor() {
     super(INITIAL_STATE);
+  }
+
+  ngOnDestroy(): void {
+    super.onDestroy();
   }
 
   setName(name: string): void {
