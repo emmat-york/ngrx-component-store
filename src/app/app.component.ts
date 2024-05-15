@@ -88,4 +88,8 @@ export class AppComponent {
   setAge(): void {
     this.appComponentStore.setAge(this.formValue.age);
   }
+
+  updateYearOfCarProduction(): void {
+    this.appComponentStore.updateYearOfCarProduction('06-10-1995');
+  }
 }

@@ -30,10 +30,7 @@ const INITIAL_STATE: AppStoreState = {
 };
 
 @Injectable()
-export class AppComponentStore
-  extends CustomStore<AppStoreState>
-  implements OnDestroy
-{
+export class AppComponentStore extends CustomStore<AppStoreState> {
   readonly name$ = this.select(state => state.name);
   readonly sureName$ = this.select(state => state.sureName);
   readonly birthDate$ = this.select(state => state.birthDate);
@@ -45,9 +42,11 @@ export class AppComponentStore
     super(INITIAL_STATE);
   }
 
-  ngOnDestroy(): void {
-    super.onDestroy();
-  }
+  readonly updateYearOfCarProduction = this.updater(
+    (state, yearOfProduction: string) => ({
+      carData: { ...state.carData, yearOfProduction },
+    }),
+  );
 
   setName(name: string): void {
     this.setState(state => ({ ...state, name }));
