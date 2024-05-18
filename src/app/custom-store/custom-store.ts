@@ -28,10 +28,6 @@ export class CustomStore<State extends object> implements OnDestroy {
     return this._stateSubject$.asObservable();
   }
 
-  protected get state(): State {
-    return this.frozenState;
-  }
-
   ngOnDestroy(): void {
     for (const key in this._state) {
       this._state[key].complete();
@@ -53,12 +49,7 @@ export class CustomStore<State extends object> implements OnDestroy {
       });
 
       for (const key in resultOfUpdater) {
-        const stateSubjectValueByKey = this._stateSubject$.getValue()[key];
-        const stateValueByKey = this._state[key].getValue();
-
-        if (stateSubjectValueByKey !== stateValueByKey) {
-          this._state[key].next(stateSubjectValueByKey);
-        }
+        this.checkAndUpdateStoreState(key);
       }
     };
   }
@@ -74,12 +65,16 @@ export class CustomStore<State extends object> implements OnDestroy {
     this._stateSubject$.next(stateSubjectUpdatedState);
 
     for (const key in stateSubjectUpdatedState) {
-      const stateSubjectValueByKey = stateSubjectUpdatedState[key];
-      const stateValueByKey = this._state[key].getValue();
+      this.checkAndUpdateStoreState(key);
+    }
+  }
 
-      if (stateSubjectValueByKey !== stateValueByKey) {
-        this._state[key].next(stateSubjectValueByKey);
-      }
+  private checkAndUpdateStoreState(key: keyof State): void {
+    const stateSubjectValueByKey = this._stateSubject$.getValue()[key];
+    const stateValueByKey = this._state[key].getValue();
+
+    if (stateSubjectValueByKey !== stateValueByKey) {
+      this._state[key].next(stateSubjectValueByKey);
     }
   }
 
