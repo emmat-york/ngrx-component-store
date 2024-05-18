@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { AppComponentStore } from './app-component.store';
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe, JsonPipe, NgIf } from '@angular/common';
 
 interface AppFormGroup {
   name: string;
@@ -22,7 +22,7 @@ interface AppFormGroup {
   templateUrl: 'app.component.html',
   styleUrl: 'app.component.scss',
   providers: [AppComponentStore],
-  imports: [ReactiveFormsModule, AsyncPipe, NgIf],
+  imports: [ReactiveFormsModule, AsyncPipe, NgIf, JsonPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
@@ -32,6 +32,7 @@ export class AppComponent {
   readonly address$ = this.appComponentStore.address$;
   readonly carData$ = this.appComponentStore.carData$;
   readonly age$ = this.appComponentStore.age$;
+  readonly state$ = this.appComponentStore.state2$;
 
   readonly formGroup = this.formBuilder.nonNullable.group({
     name: [''],

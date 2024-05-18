@@ -111,4 +111,8 @@
       <button type="button" (click)="resetState()">Reset state</button>
     </div>
   </div>
+
+  <div class="control-container">
+    {{ state$ | async | json }}
+  </div>
 </form>

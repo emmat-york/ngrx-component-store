@@ -50,6 +50,7 @@ export class AppComponentStore extends CustomStore<AppStoreState> {
   readonly age$ = this.select(state => state.age).pipe(
     tap(v => console.log('age$', v)),
   );
+  readonly state2$ = this.state$;
 
   constructor() {
     super(INITIAL_STATE);

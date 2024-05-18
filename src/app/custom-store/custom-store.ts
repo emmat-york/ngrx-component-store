@@ -5,7 +5,7 @@ export type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
 
-const STATE_INJECTION_TOKEN = new InjectionToken('stateInjectionToken');
+const STATE_INJECTION_TOKEN = new InjectionToken('STATE_INJECTION_TOKEN');
 
 @Injectable()
 export class CustomStore<State extends object> implements OnDestroy {
