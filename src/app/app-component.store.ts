@@ -1,5 +1,6 @@
 import { CustomStore } from './custom-store/custom-store';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { tap } from 'rxjs';
 
 interface AppStoreState {
   name: string;
@@ -31,22 +32,36 @@ const INITIAL_STATE: AppStoreState = {
 
 @Injectable()
 export class AppComponentStore extends CustomStore<AppStoreState> {
-  readonly name$ = this.select(state => state.name);
-  readonly sureName$ = this.select(state => state.sureName);
-  readonly birthDate$ = this.select(state => state.birthDate);
-  readonly address$ = this.select(state => state.address);
-  readonly carData$ = this.select(state => state.carData);
-  readonly age$ = this.select(state => state.age);
+  readonly name$ = this.select(state => state.name).pipe(
+    tap(v => console.log('name$', v)),
+  );
+  readonly sureName$ = this.select(state => state.sureName).pipe(
+    tap(v => console.log('sureName$', v)),
+  );
+  readonly birthDate$ = this.select(state => state.birthDate).pipe(
+    tap(v => console.log('birthDate$', v)),
+  );
+  readonly address$ = this.select(state => state.address).pipe(
+    tap(v => console.log('address$', v)),
+  );
+  readonly carData$ = this.select(state => state.carData).pipe(
+    tap(v => console.log('carData$', v)),
+  );
+  readonly age$ = this.select(state => state.age).pipe(
+    tap(v => console.log('age$', v)),
+  );
 
   constructor() {
     super(INITIAL_STATE);
   }
 
-  readonly updateYearOfCarProduction = this.updater(
-    (state, yearOfProduction: string) => ({
-      carData: { ...state.carData, yearOfProduction },
-    }),
-  );
+  readonly updateYearOfProd = this.updater((state, year: string) => ({
+    ...state,
+    carData: {
+      ...state.carData,
+      yearOfProduction: year,
+    },
+  }));
 
   setName(name: string): void {
     this.setState(state => ({ ...state, name }));

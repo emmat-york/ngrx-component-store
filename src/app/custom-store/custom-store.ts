@@ -12,10 +12,10 @@ const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<undefined>(
 @Injectable()
 export class CustomStore<State extends object> implements OnDestroy {
   private readonly _state: ReactiveState<State> = {} as ReactiveState<State>;
-  private readonly stateSubject$: BehaviorSubject<State>;
+  private readonly _stateSubject$: BehaviorSubject<State>;
 
   protected constructor(@Inject(INITIAL_STATE_INJECTION_TOKEN) state: State) {
-    this.stateSubject$ = new BehaviorSubject<State>(state);
+    this._stateSubject$ = new BehaviorSubject<State>(state);
 
     for (const key in state) {
       this._state[key] = this.getPropAsBehaviourSubject(state, key);
@@ -25,7 +25,7 @@ export class CustomStore<State extends object> implements OnDestroy {
   }
 
   protected get state$(): Observable<State> {
-    return this.stateSubject$.asObservable();
+    return this._stateSubject$.asObservable();
   }
 
   protected get state(): State {
@@ -37,27 +37,28 @@ export class CustomStore<State extends object> implements OnDestroy {
       this._state[key].complete();
     }
 
-    this.stateSubject$.complete();
+    this._stateSubject$.complete();
   }
 
   protected updater<PropName extends keyof State, Data>(
-    updaterFn: (
-      state: State,
-      data: Data,
-    ) => { [K in PropName]: State[PropName] },
+    updaterFn: (state: State, data: Data) => { [Key in PropName]: State[Key] },
   ): (data: Data) => void {
     return (data: Data): void => {
       const frozenState = this.frozenState;
-      const resultOfUpdater = updaterFn(this.frozenState, data);
+      const resultOfUpdater = updaterFn(frozenState, data);
+
+      this._stateSubject$.next({
+        ...frozenState,
+        ...resultOfUpdater,
+      });
 
       for (const key in resultOfUpdater) {
-        this.stateSubject$.next({
-          ...frozenState,
-          [key]: resultOfUpdater[key],
-        });
+        const stateSubjectValueByKey = this._stateSubject$.getValue()[key];
+        const stateValueByKey = this._state[key].getValue();
 
-        // @ts-ignore
-        this._state[key].next(resultOfUpdater[key]);
+        if (stateSubjectValueByKey !== stateValueByKey) {
+          this._state[key].next(stateSubjectValueByKey);
+        }
       }
     };
   }
@@ -70,7 +71,7 @@ export class CustomStore<State extends object> implements OnDestroy {
 
   protected setState(setFn: (state: State) => State): void {
     const stateSubjectUpdatedState = setFn(this.frozenState);
-    this.stateSubject$.next(stateSubjectUpdatedState);
+    this._stateSubject$.next(stateSubjectUpdatedState);
 
     for (const key in stateSubjectUpdatedState) {
       const stateSubjectValueByKey = stateSubjectUpdatedState[key];
@@ -82,14 +83,14 @@ export class CustomStore<State extends object> implements OnDestroy {
     }
   }
 
-  private getPropAsBehaviourSubject<K extends keyof State>(
+  private getPropAsBehaviourSubject<Key extends keyof State>(
     state: State,
-    key: K,
-  ): BehaviorSubject<State[K]> {
-    return new BehaviorSubject<State[K]>(state[key]);
+    key: Key,
+  ): BehaviorSubject<State[Key]> {
+    return new BehaviorSubject<State[Key]>(state[key]);
   }
 
   private get frozenState(): State {
-    return Object.freeze(this.stateSubject$.getValue());
+    return Object.freeze(this._stateSubject$.getValue());
   }
 }
