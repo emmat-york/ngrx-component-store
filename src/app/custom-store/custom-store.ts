@@ -49,7 +49,7 @@ export class CustomStore<State extends object> implements OnDestroy {
       });
 
       for (const key in resultOfUpdater) {
-        this.checkAndUpdateStoreState(key);
+        this.checkAndUpdateState(key);
       }
     };
   }
@@ -65,11 +65,11 @@ export class CustomStore<State extends object> implements OnDestroy {
     this._stateSubject$.next(stateSubjectUpdatedState);
 
     for (const key in stateSubjectUpdatedState) {
-      this.checkAndUpdateStoreState(key);
+      this.checkAndUpdateState(key);
     }
   }
 
-  private checkAndUpdateStoreState(key: keyof State): void {
+  private checkAndUpdateState(key: keyof State): void {
     const stateSubjectValueByKey = this._stateSubject$.getValue()[key];
     const stateValueByKey = this._state[key].getValue();
 
