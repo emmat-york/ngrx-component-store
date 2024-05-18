@@ -92,4 +92,8 @@ export class AppComponent {
   updateYearOfCarProduction(): void {
     this.appComponentStore.updateYearOfProd('06-10-1995');
   }
+
+  resetState(): void {
+    this.appComponentStore.resetState();
+  }
 }

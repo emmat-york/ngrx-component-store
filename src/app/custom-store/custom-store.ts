@@ -5,16 +5,14 @@ export type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
 
-const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<undefined>(
-  'INITIAL_STATE_INJECTION_TOKEN',
-);
+const STATE_INJECTION_TOKEN = new InjectionToken('stateInjectionToken');
 
 @Injectable()
 export class CustomStore<State extends object> implements OnDestroy {
   private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
   private readonly stateSubject$: BehaviorSubject<State>;
 
-  protected constructor(@Inject(INITIAL_STATE_INJECTION_TOKEN) state: State) {
+  constructor(@Inject(STATE_INJECTION_TOKEN) state: State) {
     this.stateSubject$ = new BehaviorSubject<State>(state);
 
     for (const key in state) {
@@ -24,16 +22,16 @@ export class CustomStore<State extends object> implements OnDestroy {
     Object.freeze(this.state);
   }
 
-  protected get state$(): Observable<State> {
-    return this.stateSubject$.asObservable();
-  }
-
   ngOnDestroy(): void {
     for (const key in this.state) {
       this.state[key].complete();
     }
 
     this.stateSubject$.complete();
+  }
+
+  protected get state$(): Observable<State> {
+    return this.stateSubject$.asObservable();
   }
 
   protected updater<PropName extends keyof State, Data>(
@@ -60,11 +58,17 @@ export class CustomStore<State extends object> implements OnDestroy {
     return selectFn(this.state).asObservable();
   }
 
-  protected setState(setFn: (state: State) => State): void {
-    const stateSubjectUpdatedState = setFn(this.frozenState);
-    this.stateSubject$.next(stateSubjectUpdatedState);
+  protected setState(setFn: (state: State) => State): void;
+  protected setState(state: State): void;
+  protected setState(stateOrSetFn: State | ((state: State) => State)): void {
+    const newState =
+      typeof stateOrSetFn === 'function'
+        ? stateOrSetFn(this.frozenState)
+        : stateOrSetFn;
 
-    for (const key in stateSubjectUpdatedState) {
+    this.stateSubject$.next(newState);
+
+    for (const key in newState) {
       this.checkAndUpdateState(key);
     }
   }

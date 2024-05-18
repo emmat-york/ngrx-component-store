@@ -106,4 +106,19 @@ export class AppComponentStore extends CustomStore<AppStoreState> {
   setAge(age: number | null): void {
     this.setState(state => ({ ...state, age }));
   }
+
+  resetState(): void {
+    this.setState({
+      name: '',
+      sureName: '',
+      birthDate: '',
+      address: '',
+      carData: {
+        mark: '',
+        yearOfProduction: null,
+        isElectric: false,
+      },
+      age: null,
+    });
+  }
 }
