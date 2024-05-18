@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 
-export type ReactiveState<State extends object> = {
+type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
 
@@ -18,8 +18,6 @@ export class CustomStore<State extends object> implements OnDestroy {
     for (const key in state) {
       this.state[key] = this.getPropAsBehaviourSubject(state, key);
     }
-
-    Object.freeze(this.state);
   }
 
   ngOnDestroy(): void {
