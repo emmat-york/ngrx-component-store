@@ -32,12 +32,15 @@ export class CustomStore<State extends object> implements OnDestroy {
     return this.stateSubject$.asObservable();
   }
 
-  protected updater<PropName extends keyof State, Data>(
-    updaterFn: (state: State, data: Data) => { [Key in PropName]: State[Key] },
-  ): (data: Data) => void {
-    return (data: Data): void => {
+  protected updater<PropName extends keyof State, Payload>(
+    updaterFn: (
+      state: State,
+      payload: Payload,
+    ) => { [Key in PropName]: State[Key] },
+  ): (payload: Payload) => void {
+    return (payload: Payload): void => {
       const frozenState = this.frozenState;
-      const resultOfUpdater = updaterFn(frozenState, data);
+      const resultOfUpdater = updaterFn(frozenState, payload);
 
       this.stateSubject$.next({
         ...frozenState,
