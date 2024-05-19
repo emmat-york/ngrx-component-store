@@ -5,15 +5,19 @@ type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
 
-const STATE_INJECTION_TOKEN = new InjectionToken('STATE_INJECTION_TOKEN');
+const STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
+  'STATE_INJECTION_TOKEN',
+);
 
 @Injectable()
 export class CustomStore<State extends object> implements OnDestroy {
   private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
   private readonly stateSubject$: BehaviorSubject<State>;
+  readonly state$: Observable<State>;
 
   constructor(@Inject(STATE_INJECTION_TOKEN) state: State) {
     this.stateSubject$ = new BehaviorSubject<State>(state);
+    this.state$ = this.stateSubject$.asObservable();
 
     for (const key in state) {
       this.state[key] = this.getPropAsBehaviourSubject(state, key);
@@ -26,10 +30,6 @@ export class CustomStore<State extends object> implements OnDestroy {
     }
 
     this.stateSubject$.complete();
-  }
-
-  protected get state$(): Observable<State> {
-    return this.stateSubject$.asObservable();
   }
 
   protected updater<PropName extends keyof State, Payload>(
