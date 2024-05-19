@@ -74,6 +74,12 @@ export class CustomStore<State extends object> implements OnDestroy {
     }
   }
 
+  protected patchState(state: Partial<State>): void;
+  protected patchState(patchFn: (state: State) => Partial<State>): void;
+  protected patchState(
+    partialStateOrPatchFn: Partial<State> | ((state: State) => Partial<State>),
+  ): void {}
+
   private checkAndUpdateState(key: keyof State): void {
     const stateSubjectValueByKey = this.stateSubject$.getValue()[key];
     const stateValueByKey = this.state[key].getValue();
