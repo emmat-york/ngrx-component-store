@@ -1,6 +1,6 @@
 import { CustomStore } from './custom-store/custom-store';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, tap } from 'rxjs';
+import { tap } from 'rxjs';
 
 interface AppStoreState {
   name: string;
