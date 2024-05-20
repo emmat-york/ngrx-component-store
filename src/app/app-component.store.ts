@@ -1,6 +1,6 @@
 import { CustomStore } from './custom-store/custom-store';
 import { Injectable } from '@angular/core';
-import { tap } from 'rxjs';
+import { BehaviorSubject, tap } from 'rxjs';
 
 interface AppStoreState {
   name: string;
@@ -106,6 +106,24 @@ export class AppComponentStore extends CustomStore<AppStoreState> {
 
   setAge(age: number | null): void {
     this.setState(state => ({ ...state, age }));
+  }
+
+  patchNameAndCarData(): void {
+    this.patchState(state => ({
+      name: "Brian O'Conner",
+      carData: {
+        ...state.carData,
+        mark: 'Toyota Supra MK4',
+        isElectric: false,
+      },
+    }));
+  }
+
+  patchNameAndSureName(): void {
+    this.patchState({
+      name: 'Dominic',
+      sureName: 'Toretto',
+    });
   }
 
   resetState(): void {

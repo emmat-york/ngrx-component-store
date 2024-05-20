@@ -11,17 +11,20 @@ const STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
 
 @Injectable()
 export class CustomStore<State extends object> implements OnDestroy {
-  private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
-  private readonly stateSubject$: BehaviorSubject<State>;
   readonly state$: Observable<State>;
 
-  constructor(@Inject(STATE_INJECTION_TOKEN) state: State) {
+  private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
+  private readonly stateSubject$: BehaviorSubject<State>;
+
+  protected constructor(@Inject(STATE_INJECTION_TOKEN) state: State) {
     this.stateSubject$ = new BehaviorSubject<State>(state);
     this.state$ = this.stateSubject$.asObservable();
 
     for (const key in state) {
       this.state[key] = this.getPropAsBehaviourSubject(state, key);
     }
+
+    Object.freeze(this.state);
   }
 
   ngOnDestroy(): void {
@@ -78,7 +81,19 @@ export class CustomStore<State extends object> implements OnDestroy {
   protected patchState(patchFn: (state: State) => Partial<State>): void;
   protected patchState(
     partialStateOrPatchFn: Partial<State> | ((state: State) => Partial<State>),
-  ): void {}
+  ): void {
+    const frozenState = this.frozenState;
+    const partiallyUpdatedState =
+      typeof partialStateOrPatchFn === 'function'
+        ? partialStateOrPatchFn(frozenState)
+        : partialStateOrPatchFn;
+
+    this.stateSubject$.next({ ...frozenState, ...partiallyUpdatedState });
+
+    for (const key in partiallyUpdatedState) {
+      this.checkAndUpdateState(key);
+    }
+  }
 
   private checkAndUpdateState(key: keyof State): void {
     const stateSubjectValueByKey = this.stateSubject$.getValue()[key];
