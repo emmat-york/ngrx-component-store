@@ -16,7 +16,7 @@ export class CustomStore<State extends object> implements OnDestroy {
   private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
   private readonly stateSubject$: BehaviorSubject<State>;
 
-  protected constructor(@Inject(STATE_INJECTION_TOKEN) state: State) {
+  constructor(@Inject(STATE_INJECTION_TOKEN) state: State) {
     this.stateSubject$ = new BehaviorSubject<State>(state);
     this.state$ = this.stateSubject$.asObservable();
 
@@ -39,10 +39,9 @@ export class CustomStore<State extends object> implements OnDestroy {
     updaterFn: (state: State, payload: Payload) => State,
   ): (payload: Payload) => void {
     return (payload: Payload): void => {
-      const resultOfUpdater = updaterFn(this.frozenState, payload);
-
-      this.stateSubject$.next(resultOfUpdater);
-      this.checkAndUpdateState(resultOfUpdater);
+      const updatedState = updaterFn(this.frozenState, payload);
+      this.stateSubject$.next(updatedState);
+      this.checkAndUpdateState(updatedState);
     };
   }
 
@@ -54,18 +53,20 @@ export class CustomStore<State extends object> implements OnDestroy {
 
   protected setState(setFn: (state: State) => State): void;
   protected setState(state: State): void;
+
   protected setState(stateOrSetFn: State | ((state: State) => State)): void {
-    const newState =
+    const updatedState =
       typeof stateOrSetFn === 'function'
         ? stateOrSetFn(this.frozenState)
         : stateOrSetFn;
 
-    this.stateSubject$.next(newState);
-    this.checkAndUpdateState(newState);
+    this.stateSubject$.next(updatedState);
+    this.checkAndUpdateState(updatedState);
   }
 
   protected patchState(state: Partial<State>): void;
   protected patchState(patchFn: (state: State) => Partial<State>): void;
+
   protected patchState(
     partialStateOrPatchFn: Partial<State> | ((state: State) => Partial<State>),
   ): void {
