@@ -80,12 +80,14 @@ export class CustomStore<State extends object> implements OnDestroy {
   }
 
   private checkAndUpdateState(stateToBeChecked: Partial<State>): void {
-    for (const key in stateToBeChecked) {
-      const stateSubjectValueByKey = this.stateSubject$.getValue()[key];
-      const stateValueByKey = this.state[key].getValue();
+    const latestState = this.stateSubject$.getValue();
 
-      if (stateSubjectValueByKey !== stateValueByKey) {
-        this.state[key].next(stateSubjectValueByKey);
+    for (const key in stateToBeChecked) {
+      const valueOfLatestState = latestState[key];
+      const valueOfOutdatedState = this.state[key].getValue();
+
+      if (valueOfLatestState !== valueOfOutdatedState) {
+        this.state[key].next(valueOfLatestState);
       }
     }
   }
