@@ -35,24 +35,14 @@ export class CustomStore<State extends object> implements OnDestroy {
     this.stateSubject$.complete();
   }
 
-  protected updater<PropName extends keyof State, Payload>(
-    updaterFn: (
-      state: State,
-      payload: Payload,
-    ) => { [Key in PropName]: State[Key] },
+  protected updater<Payload>(
+    updaterFn: (state: State, payload: Payload) => State,
   ): (payload: Payload) => void {
     return (payload: Payload): void => {
-      const frozenState = this.frozenState;
-      const resultOfUpdater = updaterFn(frozenState, payload);
+      const resultOfUpdater = updaterFn(this.frozenState, payload);
 
-      this.stateSubject$.next({
-        ...frozenState,
-        ...resultOfUpdater,
-      });
-
-      for (const key in resultOfUpdater) {
-        this.checkAndUpdateState(key);
-      }
+      this.stateSubject$.next(resultOfUpdater);
+      this.checkAndUpdateState(resultOfUpdater);
     };
   }
 
@@ -71,10 +61,7 @@ export class CustomStore<State extends object> implements OnDestroy {
         : stateOrSetFn;
 
     this.stateSubject$.next(newState);
-
-    for (const key in newState) {
-      this.checkAndUpdateState(key);
-    }
+    this.checkAndUpdateState(newState);
   }
 
   protected patchState(state: Partial<State>): void;
@@ -89,18 +76,17 @@ export class CustomStore<State extends object> implements OnDestroy {
         : partialStateOrPatchFn;
 
     this.stateSubject$.next({ ...frozenState, ...partiallyUpdatedState });
-
-    for (const key in partiallyUpdatedState) {
-      this.checkAndUpdateState(key);
-    }
+    this.checkAndUpdateState(partiallyUpdatedState);
   }
 
-  private checkAndUpdateState(key: keyof State): void {
-    const stateSubjectValueByKey = this.stateSubject$.getValue()[key];
-    const stateValueByKey = this.state[key].getValue();
+  private checkAndUpdateState(stateToBeChecked: Partial<State>): void {
+    for (const key in stateToBeChecked) {
+      const stateSubjectValueByKey = this.stateSubject$.getValue()[key];
+      const stateValueByKey = this.state[key].getValue();
 
-    if (stateSubjectValueByKey !== stateValueByKey) {
-      this.state[key].next(stateSubjectValueByKey);
+      if (stateSubjectValueByKey !== stateValueByKey) {
+        this.state[key].next(stateSubjectValueByKey);
+      }
     }
   }
 
