@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { AppComponentStore } from './app-component.store';
+import { AppFacade } from './app.facade';
 import { AsyncPipe, JsonPipe, NgIf } from '@angular/common';
 
 interface AppFormGroup {
@@ -21,26 +21,26 @@ interface AppFormGroup {
   standalone: true,
   templateUrl: 'app.component.html',
   styleUrl: 'app.component.scss',
-  providers: [AppComponentStore],
+  providers: [AppFacade],
   imports: [ReactiveFormsModule, AsyncPipe, NgIf, JsonPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  readonly name$ = this.appComponentStore.name$;
-  readonly sureName$ = this.appComponentStore.sureName$;
-  readonly birthDate$ = this.appComponentStore.birthDate$;
-  readonly address$ = this.appComponentStore.address$;
-  readonly carData$ = this.appComponentStore.carData$;
-  readonly age$ = this.appComponentStore.age$;
-  readonly state$ = this.appComponentStore.state2$;
+  readonly name$ = this.appFacade.name$;
+  readonly sureName$ = this.appFacade.sureName$;
+  readonly birthDate$ = this.appFacade.birthDate$;
+  readonly address$ = this.appFacade.address$;
+  readonly carData$ = this.appFacade.carData$;
+  readonly age$ = this.appFacade.age$;
+  readonly state$ = this.appFacade.state2$;
 
-  readonly formGroup = this.formBuilder.nonNullable.group({
+  readonly formGroup = this.fb.nonNullable.group({
     name: [''],
     sureName: [''],
     birthDate: [''],
     address: [''],
     age: [null],
-    carData: this.formBuilder.nonNullable.group({
+    carData: this.fb.nonNullable.group({
       mark: [''],
       yearOfProduction: [null],
       isElectric: [false],
@@ -48,8 +48,8 @@ export class AppComponent {
   });
 
   constructor(
-    private readonly appComponentStore: AppComponentStore,
-    private readonly formBuilder: FormBuilder,
+    private readonly appFacade: AppFacade,
+    private readonly fb: FormBuilder,
   ) {}
 
   get formValue(): AppFormGroup {
@@ -57,48 +57,48 @@ export class AppComponent {
   }
 
   setName(): void {
-    this.appComponentStore.setName(this.formValue.name);
+    this.appFacade.setName(this.formValue.name);
   }
 
   setSureName(): void {
-    this.appComponentStore.setSureName(this.formValue.sureName);
+    this.appFacade.setSureName(this.formValue.sureName);
   }
 
   setBirthDate(): void {
-    this.appComponentStore.setBirthDate(this.formValue.birthDate);
+    this.appFacade.setBirthDate(this.formValue.birthDate);
   }
 
   setAddress(): void {
-    this.appComponentStore.setAddress(this.formValue.address);
+    this.appFacade.setAddress(this.formValue.address);
   }
 
   setCarMark(): void {
-    this.appComponentStore.setCarMark(this.formValue.carData.mark);
+    this.appFacade.setCarMark(this.formValue.carData.mark);
   }
 
   setCarsYearOfProduction(): void {
-    this.appComponentStore.setCarsYearOfProduction(
+    this.appFacade.setCarsYearOfProduction(
       this.formValue.carData.yearOfProduction,
     );
   }
 
   setIsElectric(): void {
-    this.appComponentStore.setIsElectric(this.formValue.carData.isElectric);
+    this.appFacade.setIsElectric(this.formValue.carData.isElectric);
   }
 
   setAge(): void {
-    this.appComponentStore.setAge(this.formValue.age);
+    this.appFacade.setAge(this.formValue.age);
   }
 
   updateYearOfCarProduction(): void {
-    this.appComponentStore.updateYearOfProd('06-10-1995');
+    this.appFacade.updateYearOfProd('06-10-1995');
   }
 
   updateNameWithEffect(): void {
-    this.appComponentStore.someEffect(this.formValue.name);
+    this.appFacade.someEffect(this.formValue.name);
   }
 
   resetState(): void {
-    this.appComponentStore.resetState();
+    this.appFacade.resetState();
   }
 }

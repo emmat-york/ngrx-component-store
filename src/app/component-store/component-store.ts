@@ -13,12 +13,10 @@ type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
 
-const STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
-  'STATE_INJECTION_TOKEN',
-);
+const STATE_INJECTION_TOKEN = new InjectionToken<unknown>('TOKEN');
 
 @Injectable()
-export class CustomStore<State extends object> implements OnDestroy {
+export class ComponentStore<State extends object> implements OnDestroy {
   protected readonly state$: Observable<State>;
 
   private readonly state: ReactiveState<State> = {} as ReactiveState<State>;

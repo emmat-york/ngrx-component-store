@@ -1,4 +1,4 @@
-import { CustomStore } from './custom-store/custom-store';
+import { ComponentStore } from './component-store/component-store';
 import { Injectable } from '@angular/core';
 import { delay, Observable, of, switchMap, tap } from 'rxjs';
 
@@ -31,7 +31,7 @@ const INITIAL_STATE: AppStoreState = {
 };
 
 @Injectable()
-export class AppComponentStore extends CustomStore<AppStoreState> {
+export class AppFacade extends ComponentStore<AppStoreState> {
   readonly name$ = this.select(state => state.name).pipe(
     tap(v => console.log('name$', v)),
   );
