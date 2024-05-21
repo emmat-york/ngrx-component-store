@@ -11,7 +11,7 @@ const STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
 
 @Injectable()
 export class CustomStore<State extends object> implements OnDestroy {
-  readonly state$: Observable<State>;
+  protected readonly state$: Observable<State>;
 
   private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
   private readonly stateSubject$: BehaviorSubject<State>;
