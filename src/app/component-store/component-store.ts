@@ -99,7 +99,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
     effectFn: (obs$: Observable<Value>) => Observable<Output>,
   ): (value: Value) => void {
     return (value: Value) => {
-      effectFn(of(value)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+      effectFn(of(value))
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {},
+          error: error => console.error(error),
+          complete: () => {},
+        });
     };
   }
 
