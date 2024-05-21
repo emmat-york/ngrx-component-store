@@ -1,6 +1,6 @@
 import { CustomStore } from './custom-store/custom-store';
 import { Injectable } from '@angular/core';
-import { tap } from 'rxjs';
+import { delay, Observable, of, switchMap, tap } from 'rxjs';
 
 interface AppStoreState {
   name: string;
@@ -52,10 +52,6 @@ export class AppComponentStore extends CustomStore<AppStoreState> {
   );
   readonly state2$ = this.state$;
 
-  constructor() {
-    super(INITIAL_STATE);
-  }
-
   readonly updateYearOfProd = this.updater((state, year: string) => ({
     ...state,
     carData: {
@@ -63,6 +59,24 @@ export class AppComponentStore extends CustomStore<AppStoreState> {
       yearOfProduction: year,
     },
   }));
+
+  readonly someEffect = this.effect((name$: Observable<string>) => {
+    return name$.pipe(
+      switchMap(name => {
+        console.log('someEffect has been called!');
+        return of(name + ': ZDAROVA!').pipe(delay(2000));
+      }),
+      tap({
+        next: value => this.setName(value),
+        error: err => console.error(err),
+        complete: () => console.log('someEffect has been completed!'),
+      }),
+    );
+  });
+
+  constructor() {
+    super(INITIAL_STATE);
+  }
 
   setName(name: string): void {
     this.setState(state => ({ ...state, name }));

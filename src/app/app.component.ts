@@ -94,6 +94,10 @@ export class AppComponent {
     this.appComponentStore.updateYearOfProd('06-10-1995');
   }
 
+  updateNameWithEffect(): void {
+    this.appComponentStore.someEffect(this.formValue.name);
+  }
+
   resetState(): void {
     this.appComponentStore.resetState();
   }

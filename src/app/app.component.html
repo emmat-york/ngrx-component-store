@@ -10,6 +10,12 @@
       <span>Saved value:</span>
       <span class="saved-value">{{ name$ | async }}</span>
     </div>
+
+    <div>
+      <button type="button" (click)="updateNameWithEffect()">
+        Update name with effect
+      </button>
+    </div>
   </div>
 
   <div class="control-container">
