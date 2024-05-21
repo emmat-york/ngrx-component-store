@@ -58,6 +58,14 @@ export class ComponentStore<State extends object> implements OnDestroy {
     return selectFn(this.state).asObservable();
   }
 
+  protected get(): State;
+  protected get<Output>(getFn: (state: State) => Output): Output;
+
+  protected get<Output>(getFn?: (state: State) => Output): State | Output {
+    const latestState = this.stateSubject$.getValue();
+    return getFn ? getFn(latestState) : latestState;
+  }
+
   protected setState(setFn: (state: State) => State): void;
   protected setState(state: State): void;
 

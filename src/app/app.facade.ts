@@ -74,6 +74,9 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     );
   });
 
+  staticState = this.get();
+  staticName = this.get(state => state.name);
+
   constructor() {
     super(INITIAL_STATE);
   }
