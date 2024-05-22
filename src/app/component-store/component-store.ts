@@ -13,7 +13,9 @@ type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
 
-const STATE_INJECTION_TOKEN = new InjectionToken<unknown>('TOKEN');
+const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
+  'INITIAL_STATE_INJECTION_TOKEN',
+);
 
 @Injectable()
 export class ComponentStore<State extends object> implements OnDestroy {
@@ -23,7 +25,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
   private readonly stateSubject$: BehaviorSubject<State>;
   private readonly destroyRef = inject(DestroyRef);
 
-  constructor(@Inject(STATE_INJECTION_TOKEN) state: State) {
+  constructor(@Inject(INITIAL_STATE_INJECTION_TOKEN) state: State) {
     this.stateSubject$ = new BehaviorSubject<State>(state);
     this.state$ = this.stateSubject$.asObservable();
 
