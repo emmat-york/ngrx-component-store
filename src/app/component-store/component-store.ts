@@ -43,10 +43,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
   }
 
   protected updater<Payload>(
-    updaterFn: (state: State, value: Payload) => State,
-  ): (value: Payload) => void {
-    return (value: Payload): void => {
-      const updatedState = updaterFn(this.frozenState, value);
+    updaterFn: (state: State, payload: Payload) => State,
+  ): (payload: Payload) => void {
+    return (payload: Payload): void => {
+      const updatedState = updaterFn(this.frozenState, payload);
       this.stateSubject$.next(updatedState);
       this.checkAndUpdateState(updatedState);
     };
@@ -62,7 +62,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
   protected get<Output>(getFn: (state: State) => Output): Output;
 
   protected get<Output>(getFn?: (state: State) => Output): State | Output {
-    const latestState = this.stateSubject$.getValue();
+    const latestState = this.frozenState;
     return getFn ? getFn(latestState) : latestState;
   }
 
