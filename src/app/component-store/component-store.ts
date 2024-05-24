@@ -1,16 +1,21 @@
-import { BehaviorSubject, Observable, of } from 'rxjs';
 import {
-  DestroyRef,
-  inject,
-  Inject,
-  Injectable,
-  InjectionToken,
-  OnDestroy,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+  BehaviorSubject,
+  combineLatest,
+  map,
+  Observable,
+  ObservedValueOf,
+  of,
+  Subject,
+  takeUntil,
+} from 'rxjs';
+import { Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 
 type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
+};
+
+type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
+  [Key in keyof SelectorsObject]: ObservedValueOf<SelectorsObject[Key]>;
 };
 
 const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
@@ -23,7 +28,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
   private readonly stateSubject$: BehaviorSubject<State>;
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly destroy$ = new Subject<void>();
 
   constructor(@Inject(INITIAL_STATE_INJECTION_TOKEN) state: State) {
     this.stateSubject$ = new BehaviorSubject<State>(state);
@@ -42,6 +47,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
     }
 
     this.stateSubject$.complete();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   protected updater<Payload>(
@@ -56,8 +63,45 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   protected select<Output>(
     selectFn: (state: ReactiveState<State>) => BehaviorSubject<Output>,
-  ): Observable<Output> {
-    return selectFn(this.state).asObservable();
+  ): Observable<Output>;
+
+  protected select<Selectors extends Record<string, Observable<unknown>>>(
+    selectors: Selectors,
+  ): Observable<ViewModel<Selectors>>;
+
+  protected select<
+    Selectors extends Record<string, Observable<unknown>>,
+    Output,
+  >(
+    selectFnOrSelectors:
+      | ((state: ReactiveState<State>) => BehaviorSubject<Output>)
+      | Selectors,
+  ): Observable<Output | ViewModel<Selectors>> {
+    if (typeof selectFnOrSelectors === 'function') {
+      return selectFnOrSelectors(this.state).asObservable();
+    }
+
+    const keys: Array<keyof Selectors> = [];
+    const selectors: Array<Observable<unknown>> = [];
+
+    for (const key in selectFnOrSelectors) {
+      selectors.push(selectFnOrSelectors[key]);
+      keys.push(key);
+    }
+
+    return combineLatest(selectors).pipe(
+      map(selectorValues => {
+        return selectorValues.reduce(
+          (vm: ViewModel<Selectors>, value, index) => {
+            return {
+              ...vm,
+              [keys[index]]: value,
+            };
+          },
+          {} as ViewModel<Selectors>,
+        );
+      }),
+    );
   }
 
   protected get(): State;
@@ -99,10 +143,14 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   protected effect<Value, Output>(
     effectFn: (obs$: Observable<Value>) => Observable<Output>,
+  ): (value: Value) => void;
+
+  protected effect<Value, Output>(
+    effectFn: (obs$: Observable<Value>) => Observable<Output>,
   ): (value: Value) => void {
     return (value: Value) => {
       effectFn(of(value))
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {},
           error: error => console.error(error),

@@ -74,8 +74,8 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     );
   });
 
-  staticState = this.get();
-  staticName = this.get(state => state.name);
+  getV1 = this.get();
+  getV2 = this.get(state => state.name);
 
   constructor() {
     super(INITIAL_STATE);
@@ -125,7 +125,7 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     this.setState(state => ({ ...state, age }));
   }
 
-  patchNameAndCarData(): void {
+  patchV1(): void {
     this.patchState(state => ({
       name: "Brian O'Conner",
       carData: {
@@ -136,7 +136,7 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     }));
   }
 
-  patchNameAndSureName(): void {
+  patchV2(): void {
     this.patchState({
       name: 'Dominic',
       sureName: 'Toretto',
