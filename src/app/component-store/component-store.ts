@@ -5,10 +5,17 @@ import {
   Observable,
   ObservedValueOf,
   of,
-  Subject,
   takeUntil,
 } from 'rxjs';
-import { Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
+import {
+  DestroyRef,
+  inject,
+  Inject,
+  Injectable,
+  InjectionToken,
+  OnDestroy,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
@@ -28,7 +35,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
   private readonly stateSubject$: BehaviorSubject<State>;
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor(@Inject(INITIAL_STATE_INJECTION_TOKEN) state: State) {
     this.stateSubject$ = new BehaviorSubject<State>(state);
@@ -47,8 +54,6 @@ export class ComponentStore<State extends object> implements OnDestroy {
     }
 
     this.stateSubject$.complete();
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   protected updater<Payload>(
@@ -154,7 +159,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
         valueOrSource instanceof Observable ? valueOrSource : of(valueOrSource);
 
       effectFn(source$)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {},
           error: error => console.error(error),
