@@ -90,16 +90,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
     }
 
     return combineLatest(selectors).pipe(
-      map(selectorValues => {
-        return selectorValues.reduce(
-          (vm: ViewModel<Selectors>, value, index) => {
-            return {
-              ...vm,
-              [keys[index]]: value,
-            };
-          },
-          {} as ViewModel<Selectors>,
-        );
+      map(values => {
+        return values.reduce((vm: ViewModel<Selectors>, value, index) => {
+          return {
+            ...vm,
+            [keys[index]]: value,
+          };
+        }, {} as ViewModel<Selectors>);
       }),
     );
   }
@@ -142,14 +139,21 @@ export class ComponentStore<State extends object> implements OnDestroy {
   }
 
   protected effect<Value, Output>(
-    effectFn: (obs$: Observable<Value>) => Observable<Output>,
+    effectFn: (source$: Observable<Value>) => Observable<Output>,
   ): (value: Value) => void;
 
   protected effect<Value, Output>(
-    effectFn: (obs$: Observable<Value>) => Observable<Output>,
-  ): (value: Value) => void {
-    return (value: Value) => {
-      effectFn(of(value))
+    effectFn: (source$: Observable<Value>) => Observable<Output>,
+  ): (source$: Observable<Value>) => void;
+
+  protected effect<Value, Output>(
+    effectFn: (source$: Observable<Value>) => Observable<Output>,
+  ): (value: Value | Observable<Value>) => void {
+    return (valueOrSource: Value | Observable<Value>) => {
+      const source$ =
+        valueOrSource instanceof Observable ? valueOrSource : of(valueOrSource);
+
+      effectFn(source$)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {},
