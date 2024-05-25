@@ -144,26 +144,14 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   protected effect<Value, Output>(
     effectFn: (source$: Observable<Value>) => Observable<Output>,
-  ): (value: Value) => void;
-
-  protected effect<Value, Output>(
-    effectFn: (source$: Observable<Value>) => Observable<Output>,
-  ): (source$: Observable<Value>) => void;
-
-  protected effect<Value, Output>(
-    effectFn: (source$: Observable<Value>) => Observable<Output>,
   ): (value: Value | Observable<Value>) => void {
-    return (valueOrSource: Value | Observable<Value>) => {
+    return (staticValueOrObservable: Value | Observable<Value>) => {
       const source$ =
-        valueOrSource instanceof Observable ? valueOrSource : of(valueOrSource);
+        staticValueOrObservable instanceof Observable
+          ? staticValueOrObservable
+          : of(staticValueOrObservable);
 
-      effectFn(source$)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: () => {},
-          error: error => console.error(error),
-          complete: () => {},
-        });
+      effectFn(source$).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     };
   }
 
