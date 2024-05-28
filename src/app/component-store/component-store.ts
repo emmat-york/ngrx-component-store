@@ -1,6 +1,7 @@
 import {
   BehaviorSubject,
   combineLatest,
+  EMPTY,
   map,
   Observable,
   ObservedValueOf,
@@ -22,6 +23,10 @@ type ReactiveState<State extends object> = {
 
 type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
   [Key in keyof SelectorsObject]: ObservedValueOf<SelectorsObject[Key]>;
+};
+
+type ResultOfSelectors<Selectors extends Observable<unknown>[]> = {
+  [Key in keyof Selectors]: ObservedValueOf<Selectors[Key]>;
 };
 
 const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
@@ -73,6 +78,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
     selectors: Selectors,
   ): Observable<ViewModel<Selectors>>;
 
+  protected select<Selectors extends Observable<unknown>[], Output>(
+    ...selectorsWithSelectFn: [
+      ...selectros: Selectors,
+      selectFn: (...results: ResultOfSelectors<Selectors>) => Output,
+    ]
+  ): Observable<Output>;
+
   protected select<
     Selectors extends Record<string, Observable<unknown>>,
     Output,
@@ -86,7 +98,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
     }
 
     const keys: Array<keyof Selectors> = [];
-    const selectors: Array<Observable<unknown>> = [];
+    const selectors: Observable<unknown>[] = [];
 
     for (const key in selectFnOrSelectors) {
       selectors.push(selectFnOrSelectors[key]);
@@ -144,12 +156,17 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   protected effect<Value, Output>(
     effectFn: (source$: Observable<Value>) => Observable<Output>,
-  ): (staticValueOrSource: Value | Observable<Value>) => void {
-    return (staticValueOrSource: Value | Observable<Value>) => {
-      const source$ =
-        staticValueOrSource instanceof Observable
-          ? staticValueOrSource
-          : of(staticValueOrSource);
+  ): (staticValueOrSource?: Value | Observable<Value>) => void {
+    return (staticValueOrSource?: Value | Observable<Value>) => {
+      let source$: Observable<Value | never>;
+
+      if (staticValueOrSource instanceof Observable) {
+        source$ = staticValueOrSource;
+      } else if (staticValueOrSource) {
+        source$ = of(staticValueOrSource);
+      } else {
+        source$ = EMPTY;
+      }
 
       effectFn(source$).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     };

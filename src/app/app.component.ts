@@ -5,13 +5,9 @@ import { AsyncPipe, JsonPipe, NgIf } from '@angular/common';
 
 interface AppFormGroup {
   name: string;
-  sureName: string;
-  birthDate: string;
-  address: string;
-  age: number | null;
+  suneName: string;
   carData: {
-    mark: string;
-    yearOfProduction: string | null;
+    brand: string;
     isElectric: boolean;
   };
 }
@@ -26,23 +22,15 @@ interface AppFormGroup {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  readonly name$ = this.appFacade.name$;
-  readonly sureName$ = this.appFacade.sureName$;
-  readonly birthDate$ = this.appFacade.birthDate$;
-  readonly address$ = this.appFacade.address$;
+  readonly vm$ = this.appFacade.vm$;
   readonly carData$ = this.appFacade.carData$;
-  readonly age$ = this.appFacade.age$;
   readonly state$ = this.appFacade.state2$;
 
   readonly formGroup = this.fb.nonNullable.group({
     name: [''],
-    sureName: [''],
-    birthDate: [''],
-    address: [''],
-    age: [null],
+    suneName: [''],
     carData: this.fb.nonNullable.group({
-      mark: [''],
-      yearOfProduction: [null],
+      brand: [''],
       isElectric: [false],
     }),
   });
@@ -61,37 +49,11 @@ export class AppComponent {
   }
 
   setSureName(): void {
-    this.appFacade.setSureName(this.formValue.sureName);
-  }
-
-  setBirthDate(): void {
-    this.appFacade.setBirthDate(this.formValue.birthDate);
-  }
-
-  setAddress(): void {
-    this.appFacade.setAddress(this.formValue.address);
-  }
-
-  setCarMark(): void {
-    this.appFacade.setCarMark(this.formValue.carData.mark);
-  }
-
-  setCarsYearOfProduction(): void {
-    this.appFacade.setCarsYearOfProduction(
-      this.formValue.carData.yearOfProduction,
-    );
+    this.appFacade.setSureName(this.formValue.suneName);
   }
 
   setIsElectric(): void {
     this.appFacade.setIsElectric(this.formValue.carData.isElectric);
-  }
-
-  setAge(): void {
-    this.appFacade.setAge(this.formValue.age);
-  }
-
-  updateYearOfCarProduction(): void {
-    this.appFacade.updateYearOfProd('06-10-1995');
   }
 
   updateNameWithEffect(): void {

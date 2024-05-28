@@ -1,4 +1,4 @@
-<form class="form-group" [formGroup]="formGroup">
+<form *ngIf="vm$ | async as vm" class="form-group" [formGroup]="formGroup">
   <h1 class="heading">Form</h1>
 
   <div class="control-container">
@@ -8,7 +8,7 @@
     <div class="value-container">
       <button type="button" (click)="setName()">Save value</button>
       <span>Saved value:</span>
-      <span class="saved-value">{{ name$ | async }}</span>
+      <span class="saved-value">{{ vm.name }}</span>
     </div>
 
     <div>
@@ -19,46 +19,13 @@
   </div>
 
   <div class="control-container">
-    <label for="sureName">Sure name:</label>
+    <label for="sureName">Age:</label>
     <input formControlName="sureName" type="text" id="sureName" />
 
     <div class="value-container">
       <button type="button" (click)="setSureName()">Save value</button>
       <span>Saved value:</span>
-      <span class="saved-value">{{ sureName$ | async }}</span>
-    </div>
-  </div>
-
-  <div class="control-container">
-    <label for="birthDate">Birth date:</label>
-    <input formControlName="birthDate" type="date" id="birthDate" />
-
-    <div class="value-container">
-      <button type="button" (click)="setBirthDate()">Save value</button>
-      <span>Saved value:</span>
-      <span class="saved-value">{{ birthDate$ | async }}</span>
-    </div>
-  </div>
-
-  <div class="control-container">
-    <label for="address">Address:</label>
-    <input formControlName="address" type="text" id="address" />
-
-    <div class="value-container">
-      <button type="button" (click)="setAddress()">Save value</button>
-      <span>Saved value:</span>
-      <span class="saved-value">{{ address$ | async }}</span>
-    </div>
-  </div>
-
-  <div class="control-container">
-    <label for="age">Age:</label>
-    <input formControlName="age" type="number" id="age" />
-
-    <div class="value-container">
-      <button type="button" (click)="setAge()">Save value</button>
-      <span>Saved value:</span>
-      <span class="saved-value">{{ age$ | async }}</span>
+      <span class="saved-value">{{ vm.sureName }}</span>
     </div>
   </div>
 
@@ -88,37 +55,24 @@
         id="yearOfProduction"
       />
 
-      <div class="value-container">
-        <button type="button" (click)="setCarsYearOfProduction()">
-          Save value
-        </button>
+      <div class="control-container">
+        <label for="isElectric">Is electric?</label>
+        <input type="checkbox" formControlName="isElectric" id="isElectric" />
 
-        <button type="button" (click)="updateYearOfCarProduction()">
-          Set updater value
-        </button>
+        <div class="value-container">
+          <button type="button" (click)="setIsElectric()">Save value</button>
+          <span>Saved value:</span>
+          <span class="saved-value">{{ carData.isElectric }}</span>
+        </div>
+      </div>
 
-        <span>Saved value:</span>
-        <span class="saved-value">{{ carData.yearOfProduction }}</span>
+      <div class="control-container">
+        <button type="button" (click)="resetState()">Reset state</button>
       </div>
     </div>
 
     <div class="control-container">
-      <label for="isElectric">Is electric?</label>
-      <input type="checkbox" formControlName="isElectric" id="isElectric" />
-
-      <div class="value-container">
-        <button type="button" (click)="setIsElectric()">Save value</button>
-        <span>Saved value:</span>
-        <span class="saved-value">{{ carData.isElectric }}</span>
-      </div>
+      {{ state$ | async | json }}
     </div>
-
-    <div class="control-container">
-      <button type="button" (click)="resetState()">Reset state</button>
-    </div>
-  </div>
-
-  <div class="control-container">
-    {{ state$ | async | json }}
   </div>
 </form>

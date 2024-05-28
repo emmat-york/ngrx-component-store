@@ -5,110 +5,74 @@ import { delay, Observable, of, switchMap, tap } from 'rxjs';
 interface AppStoreState {
   name: string;
   sureName: string;
-  birthDate: string;
-  address: string;
   carData: CarData;
-  age: number | null;
 }
 
 export interface CarData {
-  mark: string;
-  yearOfProduction: string | null;
+  brand: string;
   isElectric: boolean;
 }
 
 const INITIAL_STATE: AppStoreState = {
   name: '',
   sureName: '',
-  birthDate: '',
-  address: '',
   carData: {
-    mark: '',
-    yearOfProduction: null,
+    brand: '',
     isElectric: false,
   },
-  age: null,
 };
 
 @Injectable()
 export class AppFacade extends ComponentStore<AppStoreState> {
-  readonly name$ = this.select(state => state.name).pipe(
-    tap(v => console.log('name$', v)),
-  );
-  readonly sureName$ = this.select(state => state.sureName).pipe(
-    tap(v => console.log('sureName$', v)),
-  );
-  readonly birthDate$ = this.select(state => state.birthDate).pipe(
-    tap(v => console.log('birthDate$', v)),
-  );
-  readonly address$ = this.select(state => state.address).pipe(
-    tap(v => console.log('address$', v)),
-  );
+  // Select with selectFn
   readonly carData$ = this.select(state => state.carData).pipe(
     tap(v => console.log('carData$', v)),
   );
-  readonly age$ = this.select(state => state.age).pipe(
-    tap(v => console.log('age$', v)),
-  );
+  private readonly name$ = this.select(state => state.name);
+  private readonly sureName$ = this.select(state => state.sureName);
+
+  // Select as ViewModel
+  readonly vm$ = this.select({
+    name: this.name$,
+    sureName: this.sureName$,
+  }).pipe(tap(v => console.log(v)));
+
+  // Entire state as Observable
   readonly state2$ = this.state$;
 
-  readonly updateYearOfProd = this.updater((state, year: string) => ({
-    ...state,
-    carData: {
-      ...state.carData,
-      yearOfProduction: year,
-    },
-  }));
-
+  // Effect
   readonly someEffect = this.effect((name$: Observable<string>) => {
     return name$.pipe(
       switchMap(name => {
-        console.log('someEffect has been called!');
-        return of(name + ': ZDAROVA!').pipe(delay(2000));
+        console.log('effect has been called.');
+        return of(name + ' (changed by effect.)').pipe(delay(2000));
       }),
       tap({
         next: value => this.setName(value),
         error: err => console.error(err),
-        complete: () => console.log('someEffect has been completed!'),
+        complete: () => console.log('effect has been completed.'),
       }),
     );
   });
 
-  getV1 = this.get();
-  getV2 = this.get(state => state.name);
+  // Get entire state snapshot
+  stateSnapshot = this.get();
+
+  // Get state part snapshot
+  namePropSnapshot = this.get(state => state.name);
 
   constructor() {
     super(INITIAL_STATE);
   }
 
+  // Set state with setFn
   setName(name: string): void {
     this.setState(state => ({ ...state, name }));
   }
 
+  // Set state with setFn
   setSureName(sureName: string): void {
     this.setState(state => ({ ...state, sureName }));
-  }
-
-  setBirthDate(birthDate: string): void {
-    this.setState(state => ({ ...state, birthDate }));
-  }
-
-  setAddress(address: string): void {
-    this.setState(state => ({ ...state, address }));
-  }
-
-  setCarMark(mark: string): void {
-    this.setState(state => ({ ...state, carData: { ...state.carData, mark } }));
-  }
-
-  setCarsYearOfProduction(yearOfProduction: string | null): void {
-    this.setState(state => ({
-      ...state,
-      carData: {
-        ...state.carData,
-        yearOfProduction,
-      },
-    }));
   }
 
   setIsElectric(isElectric: boolean): void {
@@ -121,17 +85,12 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     }));
   }
 
-  setAge(age: number | null): void {
-    this.setState(state => ({ ...state, age }));
-  }
-
-  patchV1(): void {
+  // Patch state with patchFn
+  setCarBrand(brand: string): void {
     this.patchState(state => ({
-      name: "Brian O'Conner",
       carData: {
         ...state.carData,
-        mark: 'Toyota Supra MK4',
-        isElectric: false,
+        brand,
       },
     }));
   }
@@ -143,18 +102,15 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     });
   }
 
+  // Set state with state object
   resetState(): void {
     this.setState({
       name: '',
       sureName: '',
-      birthDate: '',
-      address: '',
       carData: {
-        mark: '',
-        yearOfProduction: null,
+        brand: '',
         isElectric: false,
       },
-      age: null,
     });
   }
 }
