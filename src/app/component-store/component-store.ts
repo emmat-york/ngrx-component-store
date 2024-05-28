@@ -86,33 +86,63 @@ export class ComponentStore<State extends object> implements OnDestroy {
   ): Observable<Output>;
 
   protected select<
-    Selectors extends Record<string, Observable<unknown>>,
+    SelectFn extends (state: ReactiveState<State>) => BehaviorSubject<Output>,
+    SelectorsObject extends Record<string, Observable<unknown>>,
+    SelectorsWithSelectFn extends [
+      ...selectros: Observable<unknown>[],
+      selectFn: (
+        ...results: ResultOfSelectors<Observable<unknown>[]>
+      ) => Output,
+    ],
+    Config extends Array<SelectorsObject | SelectFn | SelectorsWithSelectFn>,
     Output,
-  >(
-    selectFnOrSelectors:
-      | ((state: ReactiveState<State>) => BehaviorSubject<Output>)
-      | Selectors,
-  ): Observable<Output | ViewModel<Selectors>> {
-    if (typeof selectFnOrSelectors === 'function') {
-      return selectFnOrSelectors(this.state).asObservable();
+  >(...config: Config): Observable<Output | ViewModel<SelectorsObject>> {
+    const [firstOption] = config;
+
+    if (typeof firstOption === 'function') {
+      return firstOption(this.state).asObservable();
     }
 
-    const keys: Array<keyof Selectors> = [];
+    if (firstOption instanceof Observable) {
+      const selectorsWithFn = config as unknown as SelectorsWithSelectFn;
+
+      const selectors: Observable<unknown>[] = [];
+      let selectFn: (
+        ...results: ResultOfSelectors<Observable<unknown>[]>
+      ) => Output;
+
+      for (const selectorOrSelect of selectorsWithFn) {
+        if (selectorOrSelect instanceof Observable) {
+          selectors.push(selectorOrSelect);
+        } else {
+          selectFn = selectorOrSelect;
+        }
+      }
+
+      return combineLatest(selectors).pipe(
+        map((results: ResultOfSelectors<Observable<unknown>[]>) =>
+          selectFn(...results),
+        ),
+      );
+    }
+
+    const selectorsObject = firstOption as unknown as SelectorsObject;
+    const keys: Array<keyof SelectorsObject> = [];
     const selectors: Observable<unknown>[] = [];
 
-    for (const key in selectFnOrSelectors) {
-      selectors.push(selectFnOrSelectors[key]);
+    for (const key in selectorsObject) {
+      selectors.push(selectorsObject[key]);
       keys.push(key);
     }
 
     return combineLatest(selectors).pipe(
       map(values => {
-        return values.reduce((vm: ViewModel<Selectors>, value, index) => {
+        return values.reduce((vm: ViewModel<SelectorsObject>, value, index) => {
           return {
             ...vm,
             [keys[index]]: value,
           };
-        }, {} as ViewModel<Selectors>);
+        }, {} as ViewModel<SelectorsObject>);
       }),
     );
   }

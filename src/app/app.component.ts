@@ -5,7 +5,7 @@ import { AsyncPipe, JsonPipe, NgIf } from '@angular/common';
 
 interface AppFormGroup {
   name: string;
-  suneName: string;
+  sureName: string;
   carData: {
     brand: string;
     isElectric: boolean;
@@ -28,7 +28,7 @@ export class AppComponent {
 
   readonly formGroup = this.fb.nonNullable.group({
     name: [''],
-    suneName: [''],
+    sureName: [''],
     carData: this.fb.nonNullable.group({
       brand: [''],
       isElectric: [false],
@@ -49,7 +49,7 @@ export class AppComponent {
   }
 
   setSureName(): void {
-    this.appFacade.setSureName(this.formValue.suneName);
+    this.appFacade.setSureName(this.formValue.sureName);
   }
 
   setIsElectric(): void {

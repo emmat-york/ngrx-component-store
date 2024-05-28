@@ -37,38 +37,18 @@
     <h2>Car data</h2>
 
     <div class="control-container">
-      <label for="mark">Mark:</label>
-      <input formControlName="mark" type="text" id="mark" />
+      <label for="isElectric">Is electric?</label>
+      <input type="checkbox" formControlName="isElectric" id="isElectric" />
 
       <div class="value-container">
-        <button type="button" (click)="setCarMark()">Save value</button>
+        <button type="button" (click)="setIsElectric()">Save value</button>
         <span>Saved value:</span>
-        <span class="saved-value">{{ carData.mark }}</span>
+        <span class="saved-value">{{ carData.isElectric }}</span>
       </div>
     </div>
 
     <div class="control-container">
-      <label for="yearOfProduction">Year of production:</label>
-      <input
-        formControlName="yearOfProduction"
-        type="date"
-        id="yearOfProduction"
-      />
-
-      <div class="control-container">
-        <label for="isElectric">Is electric?</label>
-        <input type="checkbox" formControlName="isElectric" id="isElectric" />
-
-        <div class="value-container">
-          <button type="button" (click)="setIsElectric()">Save value</button>
-          <span>Saved value:</span>
-          <span class="saved-value">{{ carData.isElectric }}</span>
-        </div>
-      </div>
-
-      <div class="control-container">
-        <button type="button" (click)="resetState()">Reset state</button>
-      </div>
+      <button type="button" (click)="resetState()">Reset state</button>
     </div>
 
     <div class="control-container">
