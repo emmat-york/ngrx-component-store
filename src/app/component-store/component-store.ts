@@ -1,20 +1,5 @@
-import {
-  BehaviorSubject,
-  combineLatest,
-  EMPTY,
-  map,
-  Observable,
-  ObservedValueOf,
-  of,
-} from 'rxjs';
-import {
-  DestroyRef,
-  inject,
-  Inject,
-  Injectable,
-  InjectionToken,
-  OnDestroy,
-} from '@angular/core';
+import { BehaviorSubject, combineLatest, EMPTY, map, Observable, of } from 'rxjs';
+import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type ReactiveState<State extends object> = {
@@ -22,11 +7,11 @@ type ReactiveState<State extends object> = {
 };
 
 type VM<SelectorsObject extends Record<string, Observable<unknown>>> = {
-  [Key in keyof SelectorsObject]: ObservedValueOf<SelectorsObject[Key]>;
+  [Key in keyof SelectorsObject]: SelectorsObject[Key] extends Observable<infer U> ? U : never;
 };
 
 type SelectorsResult<Selectors extends Observable<unknown>[]> = {
-  [Key in keyof Selectors]: ObservedValueOf<Selectors[Key]>;
+  [Key in keyof Selectors]: Selectors[Key] extends Observable<infer U> ? U : never;
 };
 
 const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
@@ -154,9 +139,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   protected setState(stateOrSetFn: State | ((state: State) => State)): void {
     const updatedState =
-      typeof stateOrSetFn === 'function'
-        ? stateOrSetFn(this.frozenState)
-        : stateOrSetFn;
+      typeof stateOrSetFn === 'function' ? stateOrSetFn(this.frozenState) : stateOrSetFn;
 
     this.stateSubject$.next(updatedState);
     this.checkAndUpdateState(updatedState);

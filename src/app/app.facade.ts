@@ -24,23 +24,17 @@ const INITIAL_STATE: AppStoreState = {
 
 @Injectable()
 export class AppFacade extends ComponentStore<AppStoreState> {
-  // Select with selectFn
   readonly carData$ = this.select(state => state.carData).pipe(
     tap(v => console.log('carData$', v)),
   );
   private readonly name$ = this.select(state => state.name);
   private readonly sureName$ = this.select(state => state.sureName);
 
-  // Select as ViewModel
   readonly vm$ = this.select({
     name: this.name$,
     sureName: this.sureName$,
-  }).pipe(tap(v => console.log(v)));
+  });
 
-  // Entire state as Observable
-  readonly state2$ = this.state$;
-
-  // Effect
   readonly someEffect = this.effect((name$: Observable<string>) => {
     return name$.pipe(
       switchMap(name => {
@@ -55,35 +49,14 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     );
   });
 
-  readonly aaaaaaa$ = this.select(
-    this.vm$,
-    this.name$,
-    this.sureName$,
-    (vm, name, sureName) => {
-      return {
-        vm,
-        name,
-        sureName,
-      };
-    },
-  ).pipe(tap(v => console.log(v.vm.name)));
-
-  // Get entire state snapshot
-  stateSnapshot = this.get();
-
-  // Get state part snapshot
-  namePropSnapshot = this.get(state => state.name);
-
   constructor() {
     super(INITIAL_STATE);
   }
 
-  // Set state with setFn
   setName(name: string): void {
     this.setState(state => ({ ...state, name }));
   }
 
-  // Set state with setFn
   setSureName(sureName: string): void {
     this.setState(state => ({ ...state, sureName }));
   }
@@ -98,24 +71,6 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     }));
   }
 
-  // Patch state with patchFn
-  setCarBrand(brand: string): void {
-    this.patchState(state => ({
-      carData: {
-        ...state.carData,
-        brand,
-      },
-    }));
-  }
-
-  patchV2(): void {
-    this.patchState({
-      name: 'Dominic',
-      sureName: 'Toretto',
-    });
-  }
-
-  // Set state with state object
   resetState(): void {
     this.setState({
       name: '',
