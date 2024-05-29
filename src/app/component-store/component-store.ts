@@ -21,16 +21,16 @@ type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
 
-type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
+type VM<SelectorsObject extends Record<string, Observable<unknown>>> = {
   [Key in keyof SelectorsObject]: ObservedValueOf<SelectorsObject[Key]>;
 };
 
-type ResultOfSelectors<Selectors extends Observable<unknown>[]> = {
+type SelectorsResult<Selectors extends Observable<unknown>[]> = {
   [Key in keyof Selectors]: ObservedValueOf<Selectors[Key]>;
 };
 
 const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
-  'INITIAL_STATE_INJECTION_TOKEN',
+  'https://github.com/emmat-york/ngrx-component-store',
 );
 
 @Injectable()
@@ -76,12 +76,12 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   protected select<Selectors extends Record<string, Observable<unknown>>>(
     selectors: Selectors,
-  ): Observable<ViewModel<Selectors>>;
+  ): Observable<VM<Selectors>>;
 
   protected select<Selectors extends Observable<unknown>[], Output>(
     ...selectorsWithSelectFn: [
       ...selectros: Selectors,
-      selectFn: (...results: ResultOfSelectors<Selectors>) => Output,
+      selectFn: (...results: SelectorsResult<Selectors>) => Output,
     ]
   ): Observable<Output>;
 
@@ -90,60 +90,54 @@ export class ComponentStore<State extends object> implements OnDestroy {
     SelectorsObject extends Record<string, Observable<unknown>>,
     SelectorsWithSelectFn extends [
       ...selectros: Observable<unknown>[],
-      selectFn: (
-        ...results: ResultOfSelectors<Observable<unknown>[]>
-      ) => Output,
+      selectFn: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     ],
     Config extends Array<SelectorsObject | SelectFn | SelectorsWithSelectFn>,
     Output,
-  >(...config: Config): Observable<Output | ViewModel<SelectorsObject>> {
-    const [firstOption] = config;
+  >(...config: Config): Observable<Output | VM<SelectorsObject>> {
+    const [firstSelector] = config;
 
-    if (typeof firstOption === 'function') {
-      return firstOption(this.state).asObservable();
+    if (config.length === 1 && typeof firstSelector === 'function') {
+      return firstSelector(this.state).asObservable();
     }
 
-    if (firstOption instanceof Observable) {
-      const selectorsWithFn = config as unknown as SelectorsWithSelectFn;
+    if (config.length === 1 && typeof firstSelector === 'object') {
+      const selectorsObject = firstSelector as unknown as SelectorsObject;
 
+      const keys: Array<keyof SelectorsObject> = [];
       const selectors: Observable<unknown>[] = [];
-      let selectFn: (
-        ...results: ResultOfSelectors<Observable<unknown>[]>
-      ) => Output;
 
-      for (const selectorOrSelect of selectorsWithFn) {
-        if (selectorOrSelect instanceof Observable) {
-          selectors.push(selectorOrSelect);
-        } else {
-          selectFn = selectorOrSelect;
-        }
+      for (const key in selectorsObject) {
+        selectors.push(selectorsObject[key]);
+        keys.push(key);
       }
 
       return combineLatest(selectors).pipe(
-        map((results: ResultOfSelectors<Observable<unknown>[]>) =>
-          selectFn(...results),
-        ),
+        map(values => {
+          return values.reduce((vm: VM<SelectorsObject>, value, index) => {
+            return {
+              ...vm,
+              [keys[index]]: value,
+            };
+          }, {} as VM<SelectorsObject>);
+        }),
       );
     }
 
-    const selectorsObject = firstOption as unknown as SelectorsObject;
-    const keys: Array<keyof SelectorsObject> = [];
+    const selectorsWithSelectFn = config as unknown as SelectorsWithSelectFn;
     const selectors: Observable<unknown>[] = [];
+    let fn: (...values: SelectorsResult<Observable<unknown>[]>) => Output;
 
-    for (const key in selectorsObject) {
-      selectors.push(selectorsObject[key]);
-      keys.push(key);
+    for (const selectorOrSelect of selectorsWithSelectFn) {
+      if (selectorOrSelect instanceof Observable) {
+        selectors.push(selectorOrSelect);
+      } else {
+        fn = selectorOrSelect;
+      }
     }
 
     return combineLatest(selectors).pipe(
-      map(values => {
-        return values.reduce((vm: ViewModel<SelectorsObject>, value, index) => {
-          return {
-            ...vm,
-            [keys[index]]: value,
-          };
-        }, {} as ViewModel<SelectorsObject>);
-      }),
+      map((values: SelectorsResult<Observable<unknown>[]>) => fn(...values)),
     );
   }
 

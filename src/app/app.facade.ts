@@ -55,6 +55,19 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     );
   });
 
+  readonly aaaaaaa$ = this.select(
+    this.vm$,
+    this.name$,
+    this.sureName$,
+    (vm, name, sureName) => {
+      return {
+        vm,
+        name,
+        sureName,
+      };
+    },
+  ).pipe(tap(v => console.log(v.vm.name)));
+
   // Get entire state snapshot
   stateSnapshot = this.get();
 
