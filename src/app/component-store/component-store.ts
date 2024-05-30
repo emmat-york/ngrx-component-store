@@ -14,6 +14,16 @@ type SelectorsResult<Selectors extends Observable<unknown>[]> = {
   [Key in keyof Selectors]: Selectors[Key] extends Observable<infer U> ? U : never;
 };
 
+interface KeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>> {
+  keys: Array<keyof SelectorsObject>;
+  selectors: Observable<unknown>[];
+}
+
+interface SelectorsWithSelectFunction<Output> {
+  selectors: Observable<unknown>[];
+  selectFn: (...results: SelectorsResult<Observable<unknown>[]>) => Output;
+}
+
 const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
   'https://github.com/emmat-york/ngrx-component-store',
 );
@@ -77,25 +87,20 @@ export class ComponentStore<State extends object> implements OnDestroy {
       ...selectros: Observable<unknown>[],
       selectFn: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     ],
-    Config extends Array<SelectorsObject | SelectFn | SelectorsWithSelectFn>,
+    SelectorsWithSelectorsFn extends Array<SelectorsObject | SelectFn | SelectorsWithSelectFn>,
     Output,
-  >(...config: Config): Observable<Output | VM<SelectorsObject>> {
-    const [firstSelector] = config;
+  >(
+    ...selectorsWithSelectorsFn: SelectorsWithSelectorsFn
+  ): Observable<Output | VM<SelectorsObject>> {
+    const [firstSelector] = selectorsWithSelectorsFn;
 
-    if (config.length === 1 && typeof firstSelector === 'function') {
+    if (selectorsWithSelectorsFn.length === 1 && typeof firstSelector === 'function') {
       return firstSelector(this.state).asObservable();
     }
 
-    if (config.length === 1 && typeof firstSelector === 'object') {
+    if (selectorsWithSelectorsFn.length === 1 && typeof firstSelector === 'object') {
       const selectorsObject = firstSelector as unknown as SelectorsObject;
-
-      const keys: Array<keyof SelectorsObject> = [];
-      const selectors: Observable<unknown>[] = [];
-
-      for (const key in selectorsObject) {
-        selectors.push(selectorsObject[key]);
-        keys.push(key);
-      }
+      const { keys, selectors } = this.getKeysWithSelectors(selectorsObject);
 
       return combineLatest(selectors).pipe(
         map(values => {
@@ -109,20 +114,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
       );
     }
 
-    const selectorsWithSelectFn = config as unknown as SelectorsWithSelectFn;
-    const selectors: Observable<unknown>[] = [];
-    let fn: (...values: SelectorsResult<Observable<unknown>[]>) => Output;
-
-    for (const selectorOrSelect of selectorsWithSelectFn) {
-      if (selectorOrSelect instanceof Observable) {
-        selectors.push(selectorOrSelect);
-      } else {
-        fn = selectorOrSelect;
-      }
-    }
+    const selectorsWithSelectFn = selectorsWithSelectorsFn as unknown as SelectorsWithSelectFn;
+    const { selectors, selectFn } = this.getSelectorsWithSelectFn<SelectorsWithSelectFn, Output>(
+      selectorsWithSelectFn,
+    );
 
     return combineLatest(selectors).pipe(
-      map((values: SelectorsResult<Observable<unknown>[]>) => fn(...values)),
+      map((values: SelectorsResult<Observable<unknown>[]>) => selectFn(...values)),
     );
   }
 
@@ -190,6 +188,47 @@ export class ComponentStore<State extends object> implements OnDestroy {
         this.state[key].next(valueOfLatestState);
       }
     }
+  }
+
+  private getKeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>>(
+    selectorsObject: SelectorsObject,
+  ): KeysWithSelectors<SelectorsObject> {
+    const keys: Array<keyof SelectorsObject> = [];
+    const selectors: Observable<unknown>[] = [];
+
+    for (const key in selectorsObject) {
+      selectors.push(selectorsObject[key]);
+      keys.push(key);
+    }
+
+    return {
+      keys,
+      selectors,
+    };
+  }
+
+  private getSelectorsWithSelectFn<
+    SelectorsWithSelectFn extends [
+      ...selectros: Observable<unknown>[],
+      selectFn: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
+    ],
+    Output,
+  >(selectorsWithSelectFn: SelectorsWithSelectFn): SelectorsWithSelectFunction<Output> {
+    const selectors: Observable<unknown>[] = [];
+    let selectFn!: (...results: SelectorsResult<Observable<unknown>[]>) => Output;
+
+    for (const selectorOrSelect of selectorsWithSelectFn) {
+      if (selectorOrSelect instanceof Observable) {
+        selectors.push(selectorOrSelect);
+      } else {
+        selectFn = selectorOrSelect;
+      }
+    }
+
+    return {
+      selectors,
+      selectFn,
+    };
   }
 
   private getPropAsBehaviourSubject<Key extends keyof State>(

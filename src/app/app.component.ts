@@ -22,9 +22,13 @@ interface AppFormGroup {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  readonly vm$ = this.appFacade.vm$;
-  readonly carData$ = this.appFacade.carData$;
-  readonly state$ = this.appFacade.state2$;
+  // readonly name$ = this.appFacade.name$;
+  // readonly sureName$ = this.appFacade.sureName$;
+  // readonly carData$ = this.appFacade.carData$;
+
+  // vm$ = this.appFacade.vm$;
+
+  selectorsWithSelectFn$ = this.appFacade.selectorsWithSelectFn$;
 
   readonly formGroup = this.fb.nonNullable.group({
     name: [''],
@@ -54,13 +58,5 @@ export class AppComponent {
 
   setIsElectric(): void {
     this.appFacade.setIsElectric(this.formValue.carData.isElectric);
-  }
-
-  updateNameWithEffect(): void {
-    this.appFacade.someEffect(this.formValue.name);
-  }
-
-  resetState(): void {
-    this.appFacade.resetState();
   }
 }

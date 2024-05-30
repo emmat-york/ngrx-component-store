@@ -1,4 +1,4 @@
-<form *ngIf="vm$ | async as vm" class="form-group" [formGroup]="formGroup">
+<form *ngIf="selectorsWithSelectFn$ | async as vm" class="form-group" [formGroup]="formGroup">
   <h1 class="heading">Form</h1>
 
   <div class="control-container">
@@ -8,11 +8,7 @@
     <div class="value-container">
       <button type="button" (click)="setName()">Save value</button>
       <span>Saved value:</span>
-      <span class="saved-value">{{ vm.name }}</span>
-    </div>
-
-    <div>
-      <button type="button" (click)="updateNameWithEffect()">Update name with effect</button>
+      <span class="saved-value">{{ vm.accName }}</span>
     </div>
   </div>
 
@@ -23,15 +19,11 @@
     <div class="value-container">
       <button type="button" (click)="setSureName()">Save value</button>
       <span>Saved value:</span>
-      <span class="saved-value">{{ vm.sureName }}</span>
+      <span class="saved-value">{{ vm.accSureName }}</span>
     </div>
   </div>
 
-  <div
-    *ngIf="carData$ | async as carData"
-    class="control-container car-data"
-    formGroupName="carData"
-  >
+  <div class="control-container car-data" formGroupName="carData">
     <h2>Car data</h2>
 
     <div class="control-container">
@@ -41,16 +33,8 @@
       <div class="value-container">
         <button type="button" (click)="setIsElectric()">Save value</button>
         <span>Saved value:</span>
-        <span class="saved-value">{{ carData.isElectric }}</span>
+        <span class="saved-value">{{ vm.accCarData | json }}</span>
       </div>
-    </div>
-
-    <div class="control-container">
-      <button type="button" (click)="resetState()">Reset state</button>
-    </div>
-
-    <div class="control-container">
-      {{ state$ | async | json }}
     </div>
   </div>
 </form>
