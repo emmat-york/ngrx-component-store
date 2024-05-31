@@ -50,19 +50,33 @@ export class AppFacade extends ComponentStore<AppStoreState> {
     },
   ).pipe(tap(v => console.log('selectorsWithSelectFn$', v)));
 
-  // readonly someEffect = this.effect((name$: Observable<string>) => {
-  //   return name$.pipe(
-  //     switchMap(name => {
-  //       console.log('effect has been called.');
-  //       return of(name + ' (changed by effect.)').pipe(delay(2000));
-  //     }),
-  //     tap({
-  //       next: value => this.setName(value),
-  //       error: err => console.error(err),
-  //       complete: () => console.log('effect has been completed.'),
-  //     }),
-  //   );
-  // });
+  readonly someEffect = this.effect((name$: Observable<string>) => {
+    return name$.pipe(
+      switchMap(name => {
+        console.log('effect has been called.');
+        return of(name + ' (changed by effect.)').pipe(delay(2000));
+      }),
+      tap({
+        next: value => this.setName(value),
+        error: err => console.error(err),
+        complete: () => console.log('effect has been completed.'),
+      }),
+    );
+  });
+
+  readonly someEffect2 = this.effect((name$: Observable<void>) => {
+    return name$.pipe(
+        switchMap(name => {
+          console.log('effect has been called.');
+          return of(name + ' (changed by effect.)').pipe(delay(2000));
+        }),
+        tap({
+          next: value => this.setName(value),
+          error: err => console.error(err),
+          complete: () => console.log('effect has been completed.'),
+        }),
+    );
+  });
 
   constructor() {
     super(INITIAL_STATE);

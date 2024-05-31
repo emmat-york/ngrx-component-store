@@ -44,6 +44,10 @@ export class AppComponent {
     private readonly fb: FormBuilder,
   ) {}
 
+  eff2() {
+    this.appFacade.someEffect2();
+  }
+
   get formValue(): AppFormGroup {
     return this.formGroup.getRawValue();
   }
