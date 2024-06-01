@@ -1,4 +1,4 @@
-import { BehaviorSubject, combineLatest, EMPTY, map, Observable, of } from 'rxjs';
+import { BehaviorSubject, combineLatest, isObservable, map, Observable, of, take } from 'rxjs';
 import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -171,8 +171,9 @@ export class ComponentStore<State extends object> implements OnDestroy {
     effectFn: (source$: Observable<Value | void>) => Observable<Output>,
   ): (staticValueOrSource: Value | Observable<Value> | void) => void {
     return (staticValueOrSource: Value | Observable<Value> | void) => {
-      const source$ =
-        staticValueOrSource instanceof Observable ? staticValueOrSource : of(staticValueOrSource);
+      const source$ = isObservable(staticValueOrSource)
+        ? staticValueOrSource
+        : of(staticValueOrSource);
 
       effectFn(source$).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     };
@@ -203,8 +204,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
     }
 
     return {
-      keys,
       selectors,
+      keys,
     };
   }
 
@@ -219,7 +220,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
     let selectFn!: (...results: SelectorsResult<Observable<unknown>[]>) => Output;
 
     for (const selectorOrSelect of selectorsWithSelectFn) {
-      if (selectorOrSelect instanceof Observable) {
+      if (isObservable(selectorOrSelect)) {
         selectors.push(selectorOrSelect);
       } else {
         selectFn = selectorOrSelect;
