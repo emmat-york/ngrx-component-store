@@ -1,4 +1,13 @@
-import { BehaviorSubject, combineLatest, isObservable, map, Observable, of, take } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  isObservable,
+  map,
+  Observable,
+  of,
+  Subscription,
+  take,
+} from 'rxjs';
 import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -169,13 +178,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   protected effect<Value, Output>(
     effectFn: (source$: Observable<Value | void>) => Observable<Output>,
-  ): (staticValueOrSource: Value | Observable<Value> | void) => void {
+  ): (staticValueOrSource: Value | Observable<Value> | void) => Subscription {
     return (staticValueOrSource: Value | Observable<Value> | void) => {
       const source$ = isObservable(staticValueOrSource)
         ? staticValueOrSource
         : of(staticValueOrSource);
 
-      effectFn(source$).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+      return effectFn(source$).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     };
   }
 
