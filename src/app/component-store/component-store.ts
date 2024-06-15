@@ -227,11 +227,11 @@ export class ComponentStore<State extends object> implements OnDestroy {
     const selectors: Observable<unknown>[] = [];
     let selectFn!: (...results: SelectorsResult<Observable<unknown>[]>) => Output;
 
-    for (const selectorOrSelect of selectorsWithSelectFn) {
-      if (isObservable(selectorOrSelect)) {
-        selectors.push(selectorOrSelect);
+    for (const selectorOrSelectFn of selectorsWithSelectFn) {
+      if (isObservable(selectorOrSelectFn)) {
+        selectors.push(selectorOrSelectFn);
       } else {
-        selectFn = selectorOrSelect;
+        selectFn = selectorOrSelectFn;
       }
     }
 
