@@ -1,15 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
-import { AppFacade } from './app.facade';
-import { AsyncPipe, JsonPipe, NgIf } from '@angular/common';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  templateUrl: 'app.component.html',
-  styleUrl: 'app.component.scss',
-  providers: [AppFacade],
-  imports: [ReactiveFormsModule, AsyncPipe, NgIf, JsonPipe],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: '<h1>https://github.com/emmat-york/ngrx-component-store</h1>',
 })
 export class AppComponent {}

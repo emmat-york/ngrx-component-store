@@ -1,6 +1,6 @@
 {
-  "name": "custom-component-store",
-  "version": "0.0.0",
+  "name": "component-store",
+  "version": "1.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
