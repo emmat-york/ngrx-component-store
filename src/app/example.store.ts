@@ -97,7 +97,7 @@ export class StoreExample extends ComponentStore<ExampleState> {
     );
   });
 
-  readonly emptyEffectExample = this.effect((voidSource$: Observable<void>) => {
+  readonly voidEffectExample = this.effect((voidSource$: Observable<void>) => {
     return voidSource$.pipe(
       switchMap(() => {
         this.setLoading(true);

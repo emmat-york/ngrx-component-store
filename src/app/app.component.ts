@@ -22,8 +22,8 @@ export class AppComponent {
     this.storeExample.effectExample(name);
   }
 
-  emptyEffect(): void {
-    this.storeExample.emptyEffectExample();
+  voidEffect(): void {
+    this.storeExample.voidEffectExample();
   }
 
   getSnapshot(): ExampleState {
