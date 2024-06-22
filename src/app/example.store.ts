@@ -83,7 +83,11 @@ export class StoreExample extends ComponentStore<ExampleState> {
 
   readonly effectExample = this.effect((name$: Observable<string>) => {
     return name$.pipe(
-      switchMap(() => of({ contacts: [] }).pipe(delay(1000))),
+      switchMap(() => {
+        this.setLoading(true);
+
+        return of({ contacts: [] }).pipe(delay(1000));
+      }),
       tap({
         next: ({ contacts }) => this.setContacts(contacts),
         error: error => console.error(error),
@@ -95,12 +99,17 @@ export class StoreExample extends ComponentStore<ExampleState> {
 
   readonly emptyEffectExample = this.effect((voidSource$: Observable<void>) => {
     return voidSource$.pipe(
-      switchMap(() => of({ description: 'Empty effect example.' }).pipe(delay(1000))),
+      switchMap(() => {
+        this.setLoading(true);
+
+        return of({ description: 'Empty effect example.' }).pipe(delay(1000));
+      }),
       tap({
         next: data => console.log(data),
         error: error => console.error(error),
         complete: () => console.log('Empty effect has been completed.'),
       }),
+      finalize(() => this.setLoading(false)),
     );
   });
 
