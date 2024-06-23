@@ -60,7 +60,7 @@ export class StoreExample extends ComponentStore<ExampleState> {
     personAge: this.age$,
   });
 
-  readonly acc$ = this.select(
+  readonly mapper$ = this.select(
     this.name$,
     this.sureName$,
     this.age$,

@@ -10,7 +10,7 @@ import { ExampleState, StoreExample, Initials } from './example.store';
 export class AppComponent {
   readonly latestState$ = this.storeExample.latestState$;
   readonly vm$ = this.storeExample.vm$;
-  readonly acc$ = this.storeExample.acc$;
+  readonly mapper$ = this.storeExample.mapper$;
 
   constructor(private storeExample: StoreExample) {}
 
