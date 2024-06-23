@@ -173,12 +173,12 @@ export class ComponentStore<State extends object> implements OnDestroy {
   ): (staticValueOrSource: Value | Observable<Value>) => void;
 
   protected effect<Output>(
-    effectFn: (source$: Observable<void>) => Observable<Output>,
-  ): (staticValueOrSource: void) => void;
+    effectFn: (source$: Observable<void | undefined>) => Observable<Output>,
+  ): (staticValueOrSource: undefined) => void;
 
   protected effect<Value, Output>(
     effectFn: (source$: Observable<Value | void>) => Observable<Output>,
-  ): (staticValueOrSource: Value | Observable<Value> | void) => Subscription {
+  ): (staticValueOrSource: Value | Observable<Value> | undefined) => Subscription {
     return (staticValueOrSource: Value | Observable<Value> | void) => {
       const source$ = isObservable(staticValueOrSource)
         ? staticValueOrSource
