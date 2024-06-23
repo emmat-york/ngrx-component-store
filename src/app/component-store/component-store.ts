@@ -4,6 +4,7 @@ import {
   isObservable,
   map,
   Observable,
+  ObservedValueOf,
   of,
   Subscription,
 } from 'rxjs';
@@ -15,11 +16,11 @@ type ReactiveState<State extends object> = {
 };
 
 type VM<SelectorsObject extends Record<string, Observable<unknown>>> = {
-  [Key in keyof SelectorsObject]: SelectorsObject[Key] extends Observable<infer U> ? U : never;
+  [Key in keyof SelectorsObject]: ObservedValueOf<SelectorsObject[Key]>;
 };
 
 type SelectorsResult<Selectors extends Observable<unknown>[]> = {
-  [Key in keyof Selectors]: Selectors[Key] extends Observable<infer U> ? U : never;
+  [Key in keyof Selectors]: ObservedValueOf<Selectors[Key]>;
 };
 
 interface KeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>> {

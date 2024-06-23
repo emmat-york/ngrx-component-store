@@ -53,11 +53,11 @@ export class StoreExample extends ComponentStore<ExampleState> {
   readonly latestState$ = this.state$;
 
   readonly vm$ = this.select({
-    name: this.name$,
-    sureName: this.sureName$,
-    contacts: this.contacts$,
-    car: this.car$,
-    age: this.age$,
+    personName: this.name$,
+    personSureName: this.sureName$,
+    contactList: this.contacts$,
+    carData: this.car$,
+    personAge: this.age$,
   });
 
   readonly acc$ = this.select(
@@ -68,7 +68,7 @@ export class StoreExample extends ComponentStore<ExampleState> {
     (name, sureName, age, car) => {
       return {
         fullName: `${name} ${sureName}`,
-        isAllowedToDriveCar: age ? age >= 18 : false,
+        isAllowedToDriveCar: Number(age) >= 18,
         car,
       };
     },
@@ -102,12 +102,12 @@ export class StoreExample extends ComponentStore<ExampleState> {
       switchMap(() => {
         this.setLoading(true);
 
-        return of({ description: 'Empty effect example.' }).pipe(delay(1000));
+        return of({ description: 'Void effect example.' }).pipe(delay(1000));
       }),
       tap({
         next: data => console.log(data),
         error: error => console.error(error),
-        complete: () => console.log('Empty effect has been completed.'),
+        complete: () => console.log('Void effect has been completed.'),
       }),
       finalize(() => this.setLoading(false)),
     );
