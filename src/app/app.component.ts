@@ -4,7 +4,18 @@ import { ExampleState, StoreExample, Initials } from './example.store';
 @Component({
   selector: 'app-root',
   standalone: true,
-  template: '<h1>https://github.com/emmat-york/ngrx-component-store</h1>',
+  template: `<p>
+      <a
+        href="https://github.com/emmat-york/ngrx-component-store/blob/master/src/app/component-store/component-store.ts"
+        target="_blank"
+        >github</a
+      >
+    </p>
+    <p>
+      <a href="https://www.linkedin.com/in/andrei-filimonchyk-35a033135/" target="_blank"
+        >linkedin</a
+      >
+    </p> `,
   providers: [StoreExample],
 })
 export class AppComponent {
