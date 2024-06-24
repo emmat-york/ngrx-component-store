@@ -168,8 +168,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
     this.checkAndUpdateState(partiallyUpdatedState);
   }
 
-  protected effect<Value, Output>(
-    effectFn: (source$: Observable<Value>) => Observable<Output>,
+  protected effect<Value>(
+    effectFn: (source$: Observable<Value>) => Observable<unknown>,
   ): (staticValueOrSource: Value | Observable<Value>) => Subscription {
     return (staticValueOrSource: Value | Observable<Value>) => {
       const source$ = isObservable(staticValueOrSource)
