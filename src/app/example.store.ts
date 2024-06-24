@@ -50,7 +50,7 @@ export class StoreExample extends ComponentStore<ExampleState> {
   private readonly car$ = this.select(state => state.car);
   private readonly age$ = this.select(state => state.age);
 
-  readonly latestState$ = this.state$;
+  readonly entireState$ = this.state$;
 
   readonly vm$ = this.select({
     personName: this.name$,

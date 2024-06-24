@@ -19,7 +19,7 @@ import { ExampleState, StoreExample, Initials } from './example.store';
   providers: [StoreExample],
 })
 export class AppComponent {
-  readonly latestState$ = this.storeExample.latestState$;
+  readonly entireState$ = this.storeExample.entireState$;
   readonly vm$ = this.storeExample.vm$;
   readonly mapper$ = this.storeExample.mapper$;
 
