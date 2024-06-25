@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ExampleState, StoreExample, Initials } from './example.store';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -21,7 +22,7 @@ import { ExampleState, StoreExample, Initials } from './example.store';
 export class AppComponent {
   readonly entireState$ = this.storeExample.entireState$;
   readonly vm$ = this.storeExample.vm$;
-  readonly mapper$ = this.storeExample.mapper$;
+  readonly map$ = this.storeExample.map$;
 
   constructor(private storeExample: StoreExample) {}
 
@@ -31,6 +32,10 @@ export class AppComponent {
 
   effect(name: string): void {
     this.storeExample.effectExample(name);
+  }
+
+  effectWithObs(name: string): void {
+    this.storeExample.effectExample(of(name));
   }
 
   voidEffect(): void {
