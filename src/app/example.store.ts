@@ -17,10 +17,6 @@ export interface Car {
   brand: string;
 }
 
-/*
- * Component store extended service
- * */
-
 export interface ExampleState {
   name: string;
   sureName: string;
