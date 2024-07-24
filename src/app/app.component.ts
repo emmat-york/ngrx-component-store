@@ -30,12 +30,12 @@ export class AppComponent {
     this.storeExample.updaterExample(name);
   }
 
-  effect(name: string): void {
-    this.storeExample.effectExample(name);
+  effect(id: number): void {
+    this.storeExample.effectExample(id);
   }
 
-  effectWithObs(name: string): void {
-    this.storeExample.effectExample(of(name));
+  effectWithObs(id: number): void {
+    this.storeExample.effectExample(of(id));
   }
 
   voidEffect(): void {

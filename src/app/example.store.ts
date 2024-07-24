@@ -81,10 +81,12 @@ export class StoreExample extends ComponentStore<ExampleState> {
     };
   });
 
-  readonly effectExample = this.effect((name$: Observable<string>) => {
-    return name$.pipe(
-      tap(() => this.setLoading(true)),
-      switchMap(() => of({ contacts: [] }).pipe(delay(1000))),
+  readonly effectExample = this.effect((id$: Observable<number>) => {
+    return id$.pipe(
+      switchMap(id => {
+        this.setLoading(true);
+        return of({ id, contacts: [] }).pipe(delay(1000));
+      }),
       tap({
         next: ({ contacts }) => this.setContacts(contacts),
         error: error => console.error(error),
@@ -96,8 +98,10 @@ export class StoreExample extends ComponentStore<ExampleState> {
 
   readonly voidEffectExample = this.effect<void>(voidSource$ => {
     return voidSource$.pipe(
-      tap(() => this.setLoading(true)),
-      switchMap(() => of({ description: 'Void effect example.' }).pipe(delay(1000))),
+      switchMap(() => {
+        this.setLoading(true);
+        return of({ description: 'Void effect example.' }).pipe(delay(1000));
+      }),
       tap({
         next: data => console.log(data),
         error: error => console.error(error),

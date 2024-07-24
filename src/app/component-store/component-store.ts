@@ -11,6 +11,10 @@ import {
 import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+function isFunction(objectOrFunction: object | Function): objectOrFunction is Function {
+  return typeof objectOrFunction === 'function';
+}
+
 type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
@@ -101,13 +105,14 @@ export class ComponentStore<State extends object> implements OnDestroy {
   >(
     ...selectorsWithSelectorsFn: SelectorsWithSelectorsFn
   ): Observable<Output | VM<SelectorsObject>> {
+    const selectorsLength = selectorsWithSelectorsFn.length;
     const [firstSelector] = selectorsWithSelectorsFn;
 
-    if (selectorsWithSelectorsFn.length === 1 && typeof firstSelector === 'function') {
+    if (selectorsLength === 1 && isFunction(firstSelector)) {
       return firstSelector(this.state).asObservable();
     }
 
-    if (selectorsWithSelectorsFn.length === 1 && typeof firstSelector === 'object') {
+    if (selectorsLength === 1 && !isFunction(firstSelector)) {
       const selectorsObject = firstSelector as unknown as SelectorsObject;
       const { keys, selectors } = this.getKeysWithSelectors(selectorsObject);
 
@@ -145,8 +150,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
   protected setState(state: State): void;
 
   protected setState(stateOrSetFn: State | ((state: State) => State)): void {
-    const updatedState =
-      typeof stateOrSetFn === 'function' ? stateOrSetFn(this.frozenState) : stateOrSetFn;
+    const updatedState = isFunction(stateOrSetFn) ? stateOrSetFn(this.frozenState) : stateOrSetFn;
 
     this.stateSubject$.next(updatedState);
     this.checkAndUpdateState(updatedState);
@@ -159,10 +163,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
     partialStateOrPatchFn: Partial<State> | ((state: State) => Partial<State>),
   ): void {
     const frozenState = this.frozenState;
-    const partiallyUpdatedState =
-      typeof partialStateOrPatchFn === 'function'
-        ? partialStateOrPatchFn(frozenState)
-        : partialStateOrPatchFn;
+
+    const partiallyUpdatedState = isFunction(partialStateOrPatchFn)
+      ? partialStateOrPatchFn(frozenState)
+      : partialStateOrPatchFn;
 
     this.stateSubject$.next({ ...frozenState, ...partiallyUpdatedState });
     this.checkAndUpdateState(partiallyUpdatedState);
