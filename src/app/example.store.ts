@@ -61,21 +61,17 @@ export class StoreExample extends ComponentStore<ExampleState> {
     this.sureName$,
     this.age$,
     this.car$,
-    (name, sureName, age, car) => {
-      return {
-        fullName: `${name} ${sureName}`,
-        isAllowedToDriveCar: Number(age) >= 18,
-        car,
-      };
-    },
+    (name, sureName, age, car) => ({
+      fullName: `${name} ${sureName}`,
+      isAllowedToDriveCar: Number(age) >= 18,
+      car,
+    }),
   );
 
-  readonly updaterExample = this.updater((state, sureName: string) => {
-    return {
-      ...state,
-      sureName,
-    };
-  });
+  readonly updaterExample = this.updater((state, sureName: string) => ({
+    ...state,
+    sureName,
+  }));
 
   readonly effectExample = this.effect((id$: Observable<number>) => {
     return id$.pipe(
@@ -109,6 +105,10 @@ export class StoreExample extends ComponentStore<ExampleState> {
 
   constructor() {
     super(INITIAL_STATE);
+
+    setTimeout(() => {
+      this.patchInitials('ANDREWEEEE', 'FILLLLLL');
+    }, 5000);
   }
 
   getSnapshot(): ExampleState {

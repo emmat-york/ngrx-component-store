@@ -100,42 +100,32 @@ export class ComponentStore<State extends object> implements OnDestroy {
       ...selectros: Observable<unknown>[],
       selectFn: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     ],
-    SelectorsWithSelectorsFn extends Array<SelectorsObject | SelectFn | SelectorsWithSelectFn>,
+    SelectorsWithSelectorsFn extends Array<SelectFn | SelectorsObject | SelectorsWithSelectFn>,
     Output,
   >(
     ...selectorsWithSelectorsFn: SelectorsWithSelectorsFn
   ): Observable<Output | VM<SelectorsObject>> {
-    const selectorsLength = selectorsWithSelectorsFn.length;
     const [firstSelector] = selectorsWithSelectorsFn;
 
-    if (selectorsLength === 1 && isFunction(firstSelector)) {
+    if (isFunction(firstSelector)) {
       return firstSelector(this.state).asObservable();
-    }
+    } else if (isObservable(firstSelector)) {
+      const selectorsWithSelectFn = selectorsWithSelectorsFn as unknown as SelectorsWithSelectFn;
+      const { selectors, selectFn } = this.getSelectorsWithSelectFn<SelectorsWithSelectFn, Output>(
+        selectorsWithSelectFn,
+      );
 
-    if (selectorsLength === 1 && !isFunction(firstSelector)) {
-      const selectorsObject = firstSelector as unknown as SelectorsObject;
-      const { keys, selectors } = this.getKeysWithSelectors(selectorsObject);
+      return combineLatest(selectors).pipe(map((values) => selectFn(...values)));
+    } else {
+      const { keys, selectors } = this.getKeysWithSelectors(firstSelector as SelectorsObject);
 
       return combineLatest(selectors).pipe(
-        map(values => {
-          return values.reduce((vm: VM<SelectorsObject>, value, index) => {
-            return {
-              ...vm,
-              [keys[index]]: value,
-            };
-          }, {} as VM<SelectorsObject>);
-        }),
+        map(values => values.reduce((vm: VM<SelectorsObject>, value, index) => ({
+            ...vm,
+            [keys[index]]: value,
+          }), {} as VM<SelectorsObject>)),
       );
     }
-
-    const selectorsWithSelectFn = selectorsWithSelectorsFn as unknown as SelectorsWithSelectFn;
-    const { selectors, selectFn } = this.getSelectorsWithSelectFn<SelectorsWithSelectFn, Output>(
-      selectorsWithSelectFn,
-    );
-
-    return combineLatest(selectors).pipe(
-      map((values: SelectorsResult<Observable<unknown>[]>) => selectFn(...values)),
-    );
   }
 
   protected get(): State;
