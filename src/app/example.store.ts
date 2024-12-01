@@ -105,10 +105,6 @@ export class StoreExample extends ComponentStore<ExampleState> {
 
   constructor() {
     super(INITIAL_STATE);
-
-    setTimeout(() => {
-      this.patchInitials('ANDREWEEEE', 'FILLLLLL');
-    }, 5000);
   }
 
   getSnapshot(): ExampleState {
