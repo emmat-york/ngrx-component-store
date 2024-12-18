@@ -4,7 +4,6 @@ import {
   isObservable,
   map,
   Observable,
-  ObservedValueOf,
   of,
   Subscription,
 } from 'rxjs';
@@ -19,12 +18,12 @@ type ReactiveState<State extends object> = {
   [Key in keyof State]: BehaviorSubject<State[Key]>;
 };
 
-type VM<SelectorsObject extends Record<string, Observable<unknown>>> = {
-  [Key in keyof SelectorsObject]: ObservedValueOf<SelectorsObject[Key]>;
+type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
+  [Key in keyof SelectorsObject]: SelectorsObject[Key] extends Observable<infer U> ? U : never;
 };
 
 type SelectorsResult<Selectors extends Observable<unknown>[]> = {
-  [Key in keyof Selectors]: ObservedValueOf<Selectors[Key]>;
+  [Key in keyof Selectors]: Selectors[Key] extends Observable<infer U> ? U : never;
 };
 
 interface KeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>> {
@@ -84,7 +83,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   protected select<Selectors extends Record<string, Observable<unknown>>>(
     selectors: Selectors,
-  ): Observable<VM<Selectors>>;
+  ): Observable<ViewModel<Selectors>>;
 
   protected select<Selectors extends Observable<unknown>[], Output>(
     ...selectorsWithSelectFn: [
@@ -104,7 +103,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
     Output,
   >(
     ...selectorsWithSelectorsFn: SelectorsWithSelectorsFn
-  ): Observable<Output | VM<SelectorsObject>> {
+  ): Observable<Output | ViewModel<SelectorsObject>> {
     const [firstSelector] = selectorsWithSelectorsFn;
 
     if (isFunction(firstSelector)) {
@@ -115,15 +114,19 @@ export class ComponentStore<State extends object> implements OnDestroy {
         selectorsWithSelectFn,
       );
 
-      return combineLatest(selectors).pipe(map((values) => selectFn(...values)));
+      return combineLatest(selectors).pipe(map(values => selectFn(...values)));
     } else {
       const { keys, selectors } = this.getKeysWithSelectors(firstSelector as SelectorsObject);
 
       return combineLatest(selectors).pipe(
-        map(values => values.reduce((vm: VM<SelectorsObject>, value, index) => ({
-            ...vm,
-            [keys[index]]: value,
-          }), {} as VM<SelectorsObject>)),
+        map(selectorValues =>
+          selectorValues.reduce((viewModel: ViewModel<SelectorsObject>, value, index) => {
+            return {
+              ...viewModel,
+              [keys[index]]: value,
+            };
+          }, {} as ViewModel<SelectorsObject>),
+        ),
       );
     }
   }
@@ -136,27 +139,29 @@ export class ComponentStore<State extends object> implements OnDestroy {
     return getFn ? getFn(latestState) : latestState;
   }
 
-  protected setState(setFn: (state: State) => State): void;
+  protected setState(setStateFn: (state: State) => State): void;
   protected setState(state: State): void;
 
-  protected setState(stateOrSetFn: State | ((state: State) => State)): void {
-    const updatedState = isFunction(stateOrSetFn) ? stateOrSetFn(this.frozenState) : stateOrSetFn;
+  protected setState(stateOrSetStateFn: State | ((state: State) => State)): void {
+    const updatedState = isFunction(stateOrSetStateFn)
+      ? stateOrSetStateFn(this.frozenState)
+      : stateOrSetStateFn;
 
     this.stateSubject$.next(updatedState);
     this.checkAndUpdateState(updatedState);
   }
 
   protected patchState(state: Partial<State>): void;
-  protected patchState(patchFn: (state: State) => Partial<State>): void;
+  protected patchState(patchStateFn: (state: State) => Partial<State>): void;
 
   protected patchState(
-    partialStateOrPatchFn: Partial<State> | ((state: State) => Partial<State>),
+    partialStateOrPatchStateFn: Partial<State> | ((state: State) => Partial<State>),
   ): void {
     const frozenState = this.frozenState;
 
-    const partiallyUpdatedState = isFunction(partialStateOrPatchFn)
-      ? partialStateOrPatchFn(frozenState)
-      : partialStateOrPatchFn;
+    const partiallyUpdatedState = isFunction(partialStateOrPatchStateFn)
+      ? partialStateOrPatchStateFn(frozenState)
+      : partialStateOrPatchStateFn;
 
     this.stateSubject$.next({ ...frozenState, ...partiallyUpdatedState });
     this.checkAndUpdateState(partiallyUpdatedState);
