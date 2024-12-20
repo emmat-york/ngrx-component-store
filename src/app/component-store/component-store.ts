@@ -90,9 +90,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   /**
    * @description This method selects a specific part of the state using the provided selector function.
-   * The function returns an observable that emits the selected value whenever the state changes.
-   * @param selectFn A selector function that accepts the current state
-   * and returns a BehaviorSubject of the selected value.
+   * @param selectFn A selector function that accepts the current state and returns a BehaviorSubject of the selected value.
    * @return An Observable that emits the selected value. This value is derived
    * from the BehaviorSubject returned by the selector function.
    */
@@ -105,9 +103,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * and returns a combined observable that emits a view model. The view model is an object
    * where each property corresponds to the value emitted by a selector.
    * @param selectors An object where the keys are selector names, and the values are the corresponding
-   * selectors (Observables) that extract parts of the state.
-   * @return An Observable which emits an object whose properties
-   * are the values returned by each selector in `selectors`.
+   * selectors that extract parts of the state.
+   * @return An Observable which emits an object whose properties are the values returned by each selector in `selectors`.
    **/
   protected select<Selectors extends Record<string, Observable<unknown>>>(
     selectors: Selectors,
