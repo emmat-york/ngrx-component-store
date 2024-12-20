@@ -100,8 +100,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   /**
    * @description This method selects multiple parts of the state using the provided selectors
-   * and returns a combined observable that emits a view model. The view model is an object
-   * where each property corresponds to the value emitted by a selector.
+   * and returns a combined observable that emits a view model.
    * @param selectors An object where the keys are selector names, and the values are the corresponding
    * selectors that extract parts of the state.
    * @return An Observable which emits an object whose properties are the values returned by each selector in `selectors`.
