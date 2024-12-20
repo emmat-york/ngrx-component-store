@@ -62,10 +62,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
     Object.freeze(this.state);
   }
 
-  /**
-   * @description
-   * Completes all streams.
-   **/
+  // Completes all streams.
   ngOnDestroy(): void {
     for (const key in this.state) {
       this.state[key].complete();
@@ -91,10 +88,27 @@ export class ComponentStore<State extends object> implements OnDestroy {
     };
   }
 
+  /**
+   * @description This method selects a specific part of the state using the provided selector function.
+   * The function returns an observable that emits the selected value whenever the state changes.
+   * @param selectFn A selector function that accepts the current state
+   * and returns a BehaviorSubject of the selected value.
+   * @return An Observable that emits the selected value. This value is derived
+   * from the BehaviorSubject returned by the selector function.
+   */
   protected select<Output>(
     selectFn: (state: ReactiveState<State>) => BehaviorSubject<Output>,
   ): Observable<Output>;
 
+  /**
+   * @description This method selects multiple parts of the state using the provided selectors
+   * and returns a combined observable that emits a view model. The view model is an object
+   * where each property corresponds to the value emitted by a selector.
+   * @param selectors An object where the keys are selector names, and the values are the corresponding
+   * selectors (Observables) that extract parts of the state.
+   * @return An Observable which emits an object whose properties
+   * are the values returned by each selector in `selectors`.
+   **/
   protected select<Selectors extends Record<string, Observable<unknown>>>(
     selectors: Selectors,
   ): Observable<ViewModel<Selectors>>;
@@ -106,6 +120,14 @@ export class ComponentStore<State extends object> implements OnDestroy {
     ]
   ): Observable<Output>;
 
+  /**
+   * @description Selects multiple parts of the state using the provided selectors
+   * and applies the given selector function to combine the results.
+   * @param selectorsWithSelectorsFn A tuple of selectors and a selector function:
+   *  - `selectors`: An array of observables that select different parts of the state.
+   *  - `selectFn`: A function that takes the results of all the selectors and returns a combined output.
+   * @return An Observable that emits the result of the `selectFn` applied to the selected state parts.
+   */
   protected select<
     SelectFn extends (state: ReactiveState<State>) => BehaviorSubject<Output>,
     SelectorsObject extends Record<string, Observable<unknown>>,
@@ -155,8 +177,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * depending on the selector function you provide.
    **/
   protected get<Output>(getFn?: (state: State) => Output): State | Output {
-    const latestState = this.frozenState;
-    return getFn ? getFn(latestState) : latestState;
+    return getFn ? getFn(this.frozenState) : this.frozenState;
   }
 
   protected setState(setStateFn: (state: State) => State): void;
@@ -220,7 +241,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * This method checks the validity of each field's state
    * after any state update. `stateSubject$` holds the most recent
    * version of the state, and if differences are found between its value
-   * and the corresponding `BehaviorSubject` in the state object, it updates it.
+   * and the corresponding BehaviorSubject in the state object, it updates it.
    **/
   private checkAndUpdateState(stateToBeChecked: Partial<State>): void {
     const latestState = this.stateSubject$.getValue();
