@@ -1,6 +1,4 @@
-import { Component } from '@angular/core';
-import { ExampleState, StoreExample, Initials } from './example.store';
-import { of } from 'rxjs';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -17,48 +15,6 @@ import { of } from 'rxjs';
         >linkedin</a
       >
     </p> `,
-  providers: [StoreExample],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent {
-  readonly entireState$ = this.storeExample.entireState$;
-  readonly vm$ = this.storeExample.vm$;
-  readonly map$ = this.storeExample.map$;
-
-  constructor(private storeExample: StoreExample) {}
-
-  updater(name: string): void {
-    this.storeExample.updaterExample(name);
-  }
-
-  effect(id: number): void {
-    this.storeExample.effectExample(id);
-  }
-
-  effectWithObs(id: number): void {
-    this.storeExample.effectExample(of(id));
-  }
-
-  voidEffect(): void {
-    this.storeExample.voidEffectExample();
-  }
-
-  getSnapshot(): ExampleState {
-    return this.storeExample.getSnapshot();
-  }
-
-  getInitials(): Initials {
-    return this.storeExample.getInitials();
-  }
-
-  resetState(): void {
-    this.storeExample.resetState();
-  }
-
-  patchInitials(name: string, sureName: string): void {
-    this.storeExample.patchInitials(name, sureName);
-  }
-
-  patchCarBrand(brand: string): void {
-    this.storeExample.patchCarBrand(brand);
-  }
-}
+export class AppComponent {}

@@ -44,7 +44,10 @@ const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
 export class ComponentStore<State extends object> implements OnDestroy {
   protected readonly state$: Observable<State>;
 
+  // Object where each key corresponds to a BehaviorSubject of its type.
   private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
+
+  // BehaviorSubject that holds the most recent version of the state.
   private readonly stateSubject$: BehaviorSubject<State>;
   private readonly destroyRef = inject(DestroyRef);
 
@@ -59,6 +62,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
     Object.freeze(this.state);
   }
 
+  /**
+   * @description
+   * Completes all streams.
+   **/
   ngOnDestroy(): void {
     for (const key in this.state) {
       this.state[key].complete();
@@ -67,6 +74,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
     this.stateSubject$.complete();
   }
 
+  /**
+   * @param updaterFn A function that takes two parameters:
+   * the current state and an argument, and returns a new state instance.
+   * @return A function that accepts one argument, which is forwarded as the
+   * second argument to `updaterFn`. This function will update the store state
+   * in the way you provided.
+   **/
   protected updater<Payload>(
     updaterFn: (state: State, payload: Payload) => State,
   ): (payload: Payload) => void {
@@ -134,6 +148,12 @@ export class ComponentStore<State extends object> implements OnDestroy {
   protected get(): State;
   protected get<Output>(getFn: (state: State) => Output): Output;
 
+  /**
+   * @description This method returns the current state snapshot.
+   * @param getFn An optional function that accepts the current state object.
+   * @return The current state object (if `getFn` is not provided) or a specific value,
+   * depending on the selector function you provide.
+   **/
   protected get<Output>(getFn?: (state: State) => Output): State | Output {
     const latestState = this.frozenState;
     return getFn ? getFn(latestState) : latestState;
@@ -142,6 +162,11 @@ export class ComponentStore<State extends object> implements OnDestroy {
   protected setState(setStateFn: (state: State) => State): void;
   protected setState(state: State): void;
 
+  /**
+   * @description This method allows updating the store's state.
+   * @param stateOrSetStateFn either a new state object or a function that updates
+   * the state based on the current state.
+   **/
   protected setState(stateOrSetStateFn: State | ((state: State) => State)): void {
     const updatedState = isFunction(stateOrSetStateFn)
       ? stateOrSetStateFn(this.frozenState)
@@ -154,6 +179,11 @@ export class ComponentStore<State extends object> implements OnDestroy {
   protected patchState(state: Partial<State>): void;
   protected patchState(patchStateFn: (state: State) => Partial<State>): void;
 
+  /**
+   * @description This method allows partially updating the store's state.
+   * @param partialStateOrPatchStateFn either a partial state object or a function that updates
+   * the state, either partially or fully, based on the current state.
+   **/
   protected patchState(
     partialStateOrPatchStateFn: Partial<State> | ((state: State) => Partial<State>),
   ): void {
@@ -167,6 +197,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
     this.checkAndUpdateState(partiallyUpdatedState);
   }
 
+  /**
+   * @description Creates an effect function.
+   * @param effectFn A function that takes an origin Observable input and
+   * returns an Observable. The Observable that is returned will be
+   * automatically subscribed.
+   * @return A function that will trigger the origin Observable.
+   */
   protected effect<Value>(
     effectFn: (source$: Observable<Value>) => Observable<unknown>,
   ): (staticValueOrSource: Value | Observable<Value>) => Subscription {
@@ -179,6 +216,12 @@ export class ComponentStore<State extends object> implements OnDestroy {
     };
   }
 
+  /**
+   * This method checks the validity of each field's state
+   * after any state update. `stateSubject$` holds the most recent
+   * version of the state, and if differences are found between its value
+   * and the corresponding `BehaviorSubject` in the state object, it updates it.
+   **/
   private checkAndUpdateState(stateToBeChecked: Partial<State>): void {
     const latestState = this.stateSubject$.getValue();
 
@@ -240,6 +283,11 @@ export class ComponentStore<State extends object> implements OnDestroy {
     return new BehaviorSubject<State[Key]>(state[key]);
   }
 
+  /**
+   * This getter returns a frozen object of the most recent state.
+   * Since the store state must be immutable, we need to prevent accidental mutations.
+   * Therefore, it is provided in a frozen form.
+   **/
   private get frozenState(): State {
     return Object.freeze(this.stateSubject$.getValue());
   }
