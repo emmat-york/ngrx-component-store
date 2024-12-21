@@ -72,11 +72,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
   }
 
   /**
-   * @param updaterFn A function that takes two parameters:
-   * the current state and an argument, and returns a new state instance.
-   * @return A function that accepts one argument, which is forwarded as the
-   * second argument to `updaterFn`. This function will update the store state
-   * in the way you provided.
+   * @description Creates an updater state function.
+   * @param updaterFn A function that returns a new instance of the state and takes two parameters:
+   *  - `state`: current store's state;
+   *  - `payload`: any payload.
+   * @return A function that accepts the payload and forwards it as the
+   * second argument to `updaterFn`. This function will update the store's state
+   * according to the update you provided.
    **/
   protected updater<Payload>(
     updaterFn: (state: State, payload: Payload) => State,
@@ -90,10 +92,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   /**
    * @description This method selects a specific part of the state using the provided selector function.
-   * @param selectFn A selector function that accepts the current state and returns a BehaviorSubject of the selected value.
-   * @return An Observable that emits the selected value. This value is derived
-   * from the BehaviorSubject returned by the selector function.
-   */
+   * @param selectFn A selector function that accepts the current state and returns a
+   * BehaviourSubject of the selected value.
+   * @return An Observable that emits the selected value.
+   **/
   protected select<Output>(
     selectFn: (state: ReactiveState<State>) => BehaviorSubject<Output>,
   ): Observable<Output>;
@@ -101,9 +103,9 @@ export class ComponentStore<State extends object> implements OnDestroy {
   /**
    * @description This method selects multiple parts of the state using the provided selectors
    * and returns a combined observable that emits a view model.
-   * @param selectors An object where the keys are selector names, and the values are the corresponding
-   * selectors that extract parts of the state.
-   * @return An Observable which emits an object whose properties are the values returned by each selector in `selectors`.
+   * @param selectors An object whose key values are store's selectors.
+   * @return An Observable which emits an object whose properties
+   * are the values returned by each selector in `selectors`.
    **/
   protected select<Selectors extends Record<string, Observable<unknown>>>(
     selectors: Selectors,
@@ -120,10 +122,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @description Selects multiple parts of the state using the provided selectors
    * and applies the given selector function to combine the results.
    * @param selectorsWithSelectorsFn A tuple of selectors and a selector function:
-   *  - `selectors`: An array of observables that select different parts of the state.
+   *  - `selectors`: An array of observables that select different parts of the state;
    *  - `selectFn`: A function that takes the results of all the selectors and returns a combined output.
    * @return An Observable that emits the result of the `selectFn` applied to the selected state parts.
-   */
+   **/
   protected select<
     SelectFn extends (state: ReactiveState<State>) => BehaviorSubject<Output>,
     SelectorsObject extends Record<string, Observable<unknown>>,
@@ -220,7 +222,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * returns an Observable. The Observable that is returned will be
    * automatically subscribed.
    * @return A function that will trigger the origin Observable.
-   */
+   **/
   protected effect<Value>(
     effectFn: (source$: Observable<Value>) => Observable<unknown>,
   ): (staticValueOrSource: Value | Observable<Value>) => Subscription {
@@ -234,7 +236,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
   }
 
   /**
-   * This method checks the validity of each field's state
+   * @description This method checks the validity of each field's state
    * after any state update. `stateSubject$` holds the most recent
    * version of the state, and if differences are found between its value
    * and the corresponding BehaviorSubject in the state object, it updates it.
@@ -301,7 +303,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
   }
 
   /**
-   * This getter returns a frozen object of the most recent state.
+   * @description This getter returns a frozen object of the most recent state.
    * Since the store state must be immutable, we need to prevent accidental mutations.
    * Therefore, it is provided in a frozen form.
    **/
