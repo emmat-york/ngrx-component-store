@@ -73,8 +73,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   /**
    * @description This method selects a specific part of the state using the provided selector function.
-   * @param selectFn A selector function that accepts the current state and returns a
-   * BehaviourSubject of the selected value.
+   * @param selectFn A selector function that accepts the current state and returns an
+   * Observable of the selected store's part.
    * @return An Observable that emits the selected value.
    **/
   protected select<Output>(selectFn: (state: State) => Output): Observable<Output>;
