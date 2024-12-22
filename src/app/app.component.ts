@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { StoreExample } from './example.store';
 
 @Component({
   selector: 'app-root',
@@ -14,7 +15,11 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       <a href="https://www.linkedin.com/in/andrei-filimonchyk-35a033135/" target="_blank"
         >linkedin</a
       >
-    </p> `,
+    </p>
+  `,
+  providers: [StoreExample],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor(private store: StoreExample) {}
+}

@@ -27,14 +27,14 @@ export interface ExampleState {
 }
 
 const INITIAL_STATE: ExampleState = {
-  name: '',
-  sureName: '',
+  name: 'Andrei',
+  sureName: 'Smith',
   contacts: [],
   car: {
     brand: '',
     isElectric: false,
   },
-  age: null,
+  age: 29,
   isLoading: false,
 };
 
@@ -52,7 +52,6 @@ export class StoreExample extends ComponentStore<ExampleState> {
     personName: this.name$,
     personSureName: this.sureName$,
     contactList: this.contacts$,
-    carData: this.car$,
     personAge: this.age$,
   });
 
@@ -80,7 +79,10 @@ export class StoreExample extends ComponentStore<ExampleState> {
         return of({ id, contacts: [] }).pipe(delay(1000));
       }),
       tap({
-        next: ({ contacts }) => this.setContacts(contacts),
+        next: ({ contacts }) => {
+          console.log('Settings the contacts.');
+          this.setContacts(contacts);
+        },
         error: error => console.error(error),
         complete: () => console.log('Effect has been completed.'),
       }),
