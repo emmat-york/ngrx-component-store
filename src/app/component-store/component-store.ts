@@ -1,6 +1,7 @@
 import {
   BehaviorSubject,
   combineLatest,
+  distinctUntilChanged,
   isObservable,
   map,
   Observable,
@@ -13,10 +14,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 function isFunction(objectOrFunction: object | Function): objectOrFunction is Function {
   return typeof objectOrFunction === 'function';
 }
-
-type ReactiveState<State extends object> = {
-  [Key in keyof State]: BehaviorSubject<State[Key]>;
-};
 
 type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
   [Key in keyof SelectorsObject]: SelectorsObject[Key] extends Observable<infer U> ? U : never;
@@ -44,9 +41,6 @@ const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
 export class ComponentStore<State extends object> implements OnDestroy {
   protected readonly state$: Observable<State>;
 
-  // Object where each key corresponds to a BehaviorSubject of its type.
-  private readonly state: ReactiveState<State> = {} as ReactiveState<State>;
-
   // BehaviorSubject that holds the most recent version of the state.
   private readonly stateSubject$: BehaviorSubject<State>;
   private readonly destroyRef = inject(DestroyRef);
@@ -54,20 +48,9 @@ export class ComponentStore<State extends object> implements OnDestroy {
   constructor(@Inject(INITIAL_STATE_INJECTION_TOKEN) state: State) {
     this.stateSubject$ = new BehaviorSubject<State>(state);
     this.state$ = this.stateSubject$.asObservable();
-
-    for (const key in state) {
-      this.state[key] = this.getPropAsBehaviourSubject(state, key);
-    }
-
-    Object.freeze(this.state);
   }
 
-  // Completes all streams.
   ngOnDestroy(): void {
-    for (const key in this.state) {
-      this.state[key].complete();
-    }
-
     this.stateSubject$.complete();
   }
 
@@ -84,9 +67,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
     updaterFn: (state: State, payload: Payload) => State,
   ): (payload: Payload) => void {
     return (payload: Payload): void => {
-      const updatedState = updaterFn(this.frozenState, payload);
-      this.stateSubject$.next(updatedState);
-      this.checkAndUpdateState(updatedState);
+      this.stateSubject$.next(updaterFn(this.frozenState, payload));
     };
   }
 
@@ -96,9 +77,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * BehaviourSubject of the selected value.
    * @return An Observable that emits the selected value.
    **/
-  protected select<Output>(
-    selectFn: (state: ReactiveState<State>) => BehaviorSubject<Output>,
-  ): Observable<Output>;
+  protected select<Output>(selectFn: (state: State) => Output): Observable<Output>;
 
   /**
    * @description This method selects multiple parts of the state using the provided selectors
@@ -127,7 +106,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @return An Observable that emits the result of the `selectFn` applied to the selected state parts.
    **/
   protected select<
-    SelectFn extends (state: ReactiveState<State>) => BehaviorSubject<Output>,
+    SelectFn extends (state: State) => Output,
     SelectorsObject extends Record<string, Observable<unknown>>,
     SelectorsWithSelectFn extends [
       ...selectros: Observable<unknown>[],
@@ -141,7 +120,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
     const [firstSelector] = selectorsWithSelectorsFn;
 
     if (isFunction(firstSelector)) {
-      return firstSelector(this.state).asObservable();
+      return this.state$.pipe(map(firstSelector), distinctUntilChanged());
     } else if (isObservable(firstSelector)) {
       const selectorsWithSelectFn = selectorsWithSelectorsFn as unknown as SelectorsWithSelectFn;
       const { selectors, selectFn } = this.getSelectorsWithSelectFn<SelectorsWithSelectFn, Output>(
@@ -192,7 +171,6 @@ export class ComponentStore<State extends object> implements OnDestroy {
       : stateOrSetStateFn;
 
     this.stateSubject$.next(updatedState);
-    this.checkAndUpdateState(updatedState);
   }
 
   protected patchState(state: Partial<State>): void;
@@ -213,7 +191,6 @@ export class ComponentStore<State extends object> implements OnDestroy {
       : partialStateOrPatchStateFn;
 
     this.stateSubject$.next({ ...frozenState, ...partiallyUpdatedState });
-    this.checkAndUpdateState(partiallyUpdatedState);
   }
 
   /**
@@ -233,25 +210,6 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
       return effectFn(source$).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     };
-  }
-
-  /**
-   * @description This method checks the validity of each field's state
-   * after any state update. `stateSubject$` holds the most recent
-   * version of the state, and if differences are found between its value
-   * and the corresponding BehaviorSubject in the state object, it updates it.
-   **/
-  private checkAndUpdateState(stateToBeChecked: Partial<State>): void {
-    const latestState = this.stateSubject$.getValue();
-
-    for (const key in stateToBeChecked) {
-      const valueOfLatestState = latestState[key];
-      const valueOfOutdatedState = this.state[key].getValue();
-
-      if (valueOfLatestState !== valueOfOutdatedState) {
-        this.state[key].next(valueOfLatestState);
-      }
-    }
   }
 
   private getKeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>>(
@@ -293,13 +251,6 @@ export class ComponentStore<State extends object> implements OnDestroy {
       selectors,
       selectFn,
     };
-  }
-
-  private getPropAsBehaviourSubject<Key extends keyof State>(
-    state: State,
-    key: Key,
-  ): BehaviorSubject<State[Key]> {
-    return new BehaviorSubject<State[Key]>(state[key]);
   }
 
   /**
