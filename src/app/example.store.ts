@@ -48,12 +48,15 @@ export class StoreExample extends ComponentStore<ExampleState> {
 
   readonly entireState$ = this.state$;
 
-  readonly vm$ = this.select({
-    personName: this.name$,
-    personSureName: this.sureName$,
-    contactList: this.contacts$,
-    personAge: this.age$,
-  });
+  readonly vm$ = this.select(
+    {
+      personName: this.name$,
+      personSureName: this.sureName$,
+      contactList: this.contacts$,
+      personAge: this.age$,
+    },
+    { debounce: true },
+  );
 
   readonly map$ = this.select(
     this.name$,

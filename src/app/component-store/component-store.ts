@@ -1,12 +1,14 @@
 import {
+  distinctUntilChanged,
   BehaviorSubject,
   combineLatest,
-  distinctUntilChanged,
   isObservable,
-  map,
-  Observable,
-  of,
   Subscription,
+  Observable,
+  auditTime,
+  identity,
+  map,
+  of,
 } from 'rxjs';
 import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -23,14 +25,18 @@ type SelectorsResult<Selectors extends Observable<unknown>[]> = {
   [Key in keyof Selectors]: Selectors[Key] extends Observable<infer U> ? U : never;
 };
 
-interface KeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>> {
-  keys: Array<keyof SelectorsObject>;
-  selectors: Observable<unknown>[];
-}
+type KeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>> = [
+  keys: Array<keyof SelectorsObject>,
+  selectors: Observable<unknown>[],
+];
 
-interface SelectorsWithSelectFunction<Output> {
-  selectors: Observable<unknown>[];
-  selectFn: (...results: SelectorsResult<Observable<unknown>[]>) => Output;
+type SelectorsWithProjectorFunction<Output> = [
+  selectors: Observable<unknown>[],
+  projector: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
+];
+
+interface SelectConfig {
+  debounce: true;
 }
 
 const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
@@ -75,71 +81,89 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @description This method selects a specific part of the state using the provided selector function.
    * @param selectFn A selector function that accepts the current state and returns an
    * Observable of the selected store's part.
+   * @param config An optional object that allows controlling the frequency of value emissions in the select,
+   * preventing excessive notifications during rapid state updates.
    * @return An Observable that emits the selected value.
    **/
-  protected select<Output>(selectFn: (state: State) => Output): Observable<Output>;
+  protected select<Output>(
+    selectFn: (state: State) => Output,
+    config?: SelectConfig,
+  ): Observable<Output>;
 
   /**
    * @description This method selects multiple parts of the state using the provided selectors
    * and returns a combined observable that emits a view model.
    * @param selectors An object whose key values are store's selectors.
+   * @param config An optional object that allows controlling the frequency of value emissions in the select,
+   * preventing excessive notifications during rapid state updates.
    * @return An Observable which emits an object whose properties
    * are the values returned by each selector in `selectors`.
    **/
   protected select<Selectors extends Record<string, Observable<unknown>>>(
     selectors: Selectors,
+    config?: SelectConfig,
   ): Observable<ViewModel<Selectors>>;
-
-  protected select<Selectors extends Observable<unknown>[], Output>(
-    ...selectorsWithSelectFn: [
-      ...selectros: Selectors,
-      selectFn: (...results: SelectorsResult<Selectors>) => Output,
-    ]
-  ): Observable<Output>;
 
   /**
    * @description Selects multiple parts of the state using the provided selectors
    * and applies the given selector function to combine the results.
-   * @param selectorsWithSelectorsFn A tuple of selectors and a selector function:
+   * @param selectorsWithSelectFn A tuple of selectors and a selector function:
    *  - `selectors`: An array of observables that select different parts of the state;
-   *  - `selectFn`: A function that takes the results of all the selectors and returns a combined output.
+   *  - `projector`: A function that takes the results of all the selectors and returns a combined output.
    * @return An Observable that emits the result of the `selectFn` applied to the selected state parts.
    **/
+  protected select<Selectors extends Observable<unknown>[], Output>(
+    ...selectorsWithSelectFn: [
+      ...selectros: Selectors,
+      projector: (...results: SelectorsResult<Selectors>) => Output,
+    ]
+  ): Observable<Output>;
+
   protected select<
     SelectFn extends (state: State) => Output,
     SelectorsObject extends Record<string, Observable<unknown>>,
-    SelectorsWithSelectFn extends [
+    SelectorsWithProjector extends [
       ...selectros: Observable<unknown>[],
-      selectFn: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
+      projector: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     ],
-    SelectorsWithSelectorsFn extends Array<SelectFn | SelectorsObject | SelectorsWithSelectFn>,
+    SelectorsWithSelectorsFn extends Array<SelectFn | SelectorsObject | SelectorsWithProjector>,
     Output,
   >(
     ...selectorsWithSelectorsFn: SelectorsWithSelectorsFn
   ): Observable<Output | ViewModel<SelectorsObject>> {
-    const [firstSelector] = selectorsWithSelectorsFn;
+    if (isFunction(selectorsWithSelectorsFn[0])) {
+      // Processing selectFn with config.
+      const [selectFn, config] = selectorsWithSelectorsFn as unknown as [SelectFn, SelectConfig?];
+      const isDebounceEnabled = config?.debounce ?? false;
 
-    if (isFunction(firstSelector)) {
-      return this.state$.pipe(map(firstSelector), distinctUntilChanged());
-    } else if (isObservable(firstSelector)) {
-      const selectorsWithSelectFn = selectorsWithSelectorsFn as unknown as SelectorsWithSelectFn;
-      const { selectors, selectFn } = this.getSelectorsWithSelectFn<SelectorsWithSelectFn, Output>(
-        selectorsWithSelectFn,
+      return this.state$.pipe(
+        map(selectFn),
+        distinctUntilChanged(),
+        isDebounceEnabled ? auditTime(0) : identity,
+      );
+    } else if (isObservable(selectorsWithSelectorsFn[0])) {
+      // Processing selectors with projectionFn.
+      const [selectors, projector] = this.getSelectorsWithSelectFn<SelectorsWithProjector, Output>(
+        selectorsWithSelectorsFn as unknown as SelectorsWithProjector,
       );
 
-      return combineLatest(selectors).pipe(map(values => selectFn(...values)));
+      return combineLatest(selectors).pipe(map(values => projector(...values)));
     } else {
-      const { keys, selectors } = this.getKeysWithSelectors(firstSelector as SelectorsObject);
+      // Processing ViewModel object with selectors.
+      const [vm, config] = selectorsWithSelectorsFn as unknown as [SelectorsObject, SelectConfig?];
+      const [keys, selectors] = this.getKeysWithSelectors(vm);
+      const isDebounceEnabled = config?.debounce ?? false;
 
       return combineLatest(selectors).pipe(
-        map(selectorValues =>
-          selectorValues.reduce((viewModel: ViewModel<SelectorsObject>, value, index) => {
+        map(selectorValues => {
+          return selectorValues.reduce((viewModel: ViewModel<SelectorsObject>, value, index) => {
             return {
               ...viewModel,
               [keys[index]]: value,
             };
-          }, {} as ViewModel<SelectorsObject>),
-        ),
+          }, {} as ViewModel<SelectorsObject>);
+        }),
+        isDebounceEnabled ? auditTime(0) : identity,
       );
     }
   }
@@ -213,44 +237,38 @@ export class ComponentStore<State extends object> implements OnDestroy {
   }
 
   private getKeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>>(
-    selectorsObject: SelectorsObject,
+    objectWithValuesAsSelectors: SelectorsObject,
   ): KeysWithSelectors<SelectorsObject> {
     const keys: Array<keyof SelectorsObject> = [];
     const selectors: Observable<unknown>[] = [];
 
-    for (const key in selectorsObject) {
-      selectors.push(selectorsObject[key]);
+    for (const key in objectWithValuesAsSelectors) {
+      selectors.push(objectWithValuesAsSelectors[key]);
       keys.push(key);
     }
 
-    return {
-      selectors,
-      keys,
-    };
+    return [keys, selectors];
   }
 
   private getSelectorsWithSelectFn<
-    SelectorsWithSelectFn extends [
+    SelectorsWithProjector extends [
       ...selectros: Observable<unknown>[],
       selectFn: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     ],
     Output,
-  >(selectorsWithSelectFn: SelectorsWithSelectFn): SelectorsWithSelectFunction<Output> {
+  >(selectorsWithProjector: SelectorsWithProjector): SelectorsWithProjectorFunction<Output> {
     const selectors: Observable<unknown>[] = [];
-    let selectFn!: (...results: SelectorsResult<Observable<unknown>[]>) => Output;
+    let projector!: (...results: SelectorsResult<Observable<unknown>[]>) => Output;
 
-    for (const selectorOrSelectFn of selectorsWithSelectFn) {
-      if (isObservable(selectorOrSelectFn)) {
-        selectors.push(selectorOrSelectFn);
+    for (const selectorOrProjector of selectorsWithProjector) {
+      if (isObservable(selectorOrProjector)) {
+        selectors.push(selectorOrProjector);
       } else {
-        selectFn = selectorOrSelectFn;
+        projector = selectorOrProjector;
       }
     }
 
-    return {
-      selectors,
-      selectFn,
-    };
+    return [selectors, projector];
   }
 
   /**
