@@ -143,7 +143,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
       );
     } else if (isObservable(selectorsWithSelectorsFn[0])) {
       // Processing selectors with projectionFn.
-      const [selectors, projector] = this.getSelectorsWithSelectFn<SelectorsWithProjector, Output>(
+      const [selectors, projector] = this.getSelectorsWithProjector<SelectorsWithProjector, Output>(
         selectorsWithSelectorsFn as unknown as SelectorsWithProjector,
       );
 
@@ -250,10 +250,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
     return [keys, selectors];
   }
 
-  private getSelectorsWithSelectFn<
+  private getSelectorsWithProjector<
     SelectorsWithProjector extends [
       ...selectros: Observable<unknown>[],
-      selectFn: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
+      projector: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     ],
     Output,
   >(selectorsWithProjector: SelectorsWithProjector): SelectorsWithProjectorFunction<Output> {
