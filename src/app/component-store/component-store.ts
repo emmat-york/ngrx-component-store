@@ -107,13 +107,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
   /**
    * @description Selects multiple parts of the state using the provided selectors
    * and applies the given selector function to combine the results.
-   * @param selectorsWithSelectFn A tuple of selectors and a selector function:
+   * @param selectorsWithProjector A tuple of selectors and a selector function:
    *  - `selectors`: An array of observables that select different parts of the state;
    *  - `projector`: A function that takes the results of all the selectors and returns a combined output.
    * @return An Observable that emits the result of the `selectFn` applied to the selected state parts.
    **/
   protected select<Selectors extends Observable<unknown>[], Output>(
-    ...selectorsWithSelectFn: [
+    ...selectorsWithProjector: [
       ...selectros: Selectors,
       projector: (...results: SelectorsResult<Selectors>) => Output,
     ]
@@ -126,14 +126,12 @@ export class ComponentStore<State extends object> implements OnDestroy {
       ...selectros: Observable<unknown>[],
       projector: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     ],
-    SelectorsWithSelectorsFn extends Array<SelectFn | SelectorsObject | SelectorsWithProjector>,
+    SelectorsCollection extends Array<SelectFn | SelectorsObject | SelectorsWithProjector>,
     Output,
-  >(
-    ...selectorsWithSelectorsFn: SelectorsWithSelectorsFn
-  ): Observable<Output | ViewModel<SelectorsObject>> {
-    if (isFunction(selectorsWithSelectorsFn[0])) {
+  >(...selectorsCollection: SelectorsCollection): Observable<Output | ViewModel<SelectorsObject>> {
+    if (isFunction(selectorsCollection[0])) {
       // Processing selectFn with config.
-      const [selectFn, config] = selectorsWithSelectorsFn as unknown as [SelectFn, SelectConfig?];
+      const [selectFn, config] = selectorsCollection as unknown as [SelectFn, SelectConfig?];
       const isDebounceEnabled = config?.debounce ?? false;
 
       return this.state$.pipe(
@@ -141,16 +139,16 @@ export class ComponentStore<State extends object> implements OnDestroy {
         distinctUntilChanged(),
         isDebounceEnabled ? auditTime(0) : identity,
       );
-    } else if (isObservable(selectorsWithSelectorsFn[0])) {
+    } else if (isObservable(selectorsCollection[0])) {
       // Processing selectors with projectionFn.
       const [selectors, projector] = this.getSelectorsWithProjector<SelectorsWithProjector, Output>(
-        selectorsWithSelectorsFn as unknown as SelectorsWithProjector,
+        selectorsCollection as unknown as SelectorsWithProjector,
       );
 
       return combineLatest(selectors).pipe(map(values => projector(...values)));
     } else {
       // Processing ViewModel object with selectors.
-      const [vm, config] = selectorsWithSelectorsFn as unknown as [SelectorsObject, SelectConfig?];
+      const [vm, config] = selectorsCollection as unknown as [SelectorsObject, SelectConfig?];
       const [keys, selectors] = this.getKeysWithSelectors(vm);
       const isDebounceEnabled = config?.debounce ?? false;
 
