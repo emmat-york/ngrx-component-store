@@ -120,15 +120,16 @@ export class ComponentStore<State extends object> implements OnDestroy {
   ): Observable<Output>;
 
   protected select<
+    Output,
     SelectFn extends (state: State) => Output,
     SelectorsObject extends Record<string, Observable<unknown>>,
     SelectorsWithProjector extends [
       ...selectros: Observable<unknown>[],
       projector: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     ],
-    SelectorsCollection extends Array<SelectFn | SelectorsObject | SelectorsWithProjector>,
-    Output,
-  >(...selectorsCollection: SelectorsCollection): Observable<Output | ViewModel<SelectorsObject>> {
+  >(
+    ...selectorsCollection: Array<SelectFn | SelectorsObject | SelectorsWithProjector>
+  ): Observable<Output | ViewModel<SelectorsObject>> {
     if (isFunction(selectorsCollection[0])) {
       // Processing selectFn with config.
       const [selectFn, config] = selectorsCollection as unknown as [SelectFn, SelectConfig?];
