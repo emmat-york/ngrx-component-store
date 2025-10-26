@@ -67,7 +67,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
     updaterFn: (state: State, payload: Payload) => State,
   ): (payload: Payload) => void {
     return (payload: Payload): void => {
-      this.stateSubject$.next(updaterFn(this.frozenState, payload));
+      this.stateSubject$.next(updaterFn(this.frozenState(), payload));
     };
   }
 
@@ -158,7 +158,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * depending on the selector function you provide.
    **/
   protected get<Output>(getFn?: (state: State) => Output): State | Output {
-    return getFn ? getFn(this.frozenState) : this.frozenState;
+    return getFn ? getFn(this.frozenState()) : this.frozenState();
   }
 
   protected setState(setStateFn: (state: State) => State): void;
@@ -171,7 +171,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    **/
   protected setState(stateOrSetStateFn: State | ((state: State) => State)): void {
     const updatedState = isFunction(stateOrSetStateFn)
-      ? stateOrSetStateFn(this.frozenState)
+      ? stateOrSetStateFn(this.frozenState())
       : stateOrSetStateFn;
 
     this.stateSubject$.next(updatedState);
@@ -189,10 +189,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
     partialStateOrPatchStateFn: Partial<State> | ((state: State) => Partial<State>),
   ): void {
     const partiallyUpdatedState = isFunction(partialStateOrPatchStateFn)
-      ? partialStateOrPatchStateFn(this.frozenState)
+      ? partialStateOrPatchStateFn(this.frozenState())
       : partialStateOrPatchStateFn;
 
-    this.stateSubject$.next({ ...this.frozenState, ...partiallyUpdatedState });
+    this.stateSubject$.next({ ...this.frozenState(), ...partiallyUpdatedState });
   }
 
   /**
@@ -240,7 +240,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * Since the store state must be immutable, we need to prevent accidental mutations.
    * Therefore, it is provided in a frozen form.
    **/
-  private get frozenState(): State {
+  private frozenState(): State {
     return Object.freeze(this.stateSubject$.getValue());
   }
 }
