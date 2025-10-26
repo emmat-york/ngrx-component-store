@@ -122,29 +122,28 @@ export class ComponentStore<State extends object> implements OnDestroy {
     ],
     Output,
   >(
-    ...selectorsCollection: Array<SelectFn | SelectorsObject | SelectorsWithProjector>
+    ...collection: Array<SelectFn | SelectorsObject | SelectorsWithProjector>
   ): Observable<Output | ViewModel<SelectorsObject>> {
-    if (isFunction(selectorsCollection[0])) {
-      const [selectFn, config] = selectorsCollection as unknown as [SelectFn, SelectConfig?];
+    if (isFunction(collection[0])) {
+      const [selectFn, config] = collection as unknown as [SelectFn, SelectConfig?];
 
       return this.state$.pipe(
         map(selectFn),
         distinctUntilChanged(),
         config?.debounce ? debounceSync() : identity,
       );
-    } else if (isObservable(selectorsCollection[0])) {
+    } else if (isObservable(collection[0])) {
       const [selectors, projector] = this.getSelectorsWithProjector<SelectorsWithProjector, Output>(
-        selectorsCollection as unknown as SelectorsWithProjector,
+        collection as unknown as SelectorsWithProjector,
       );
 
       return combineLatest(selectors).pipe(map(values => projector(...values)));
     } else {
-      const [vm, config] = selectorsCollection as unknown as [SelectorsObject, SelectConfig?];
+      const [vm, config] = collection as unknown as [SelectorsObject, SelectConfig?];
 
-      return combineLatest(vm).pipe(
-        map(result => result as ViewModel<SelectorsObject>),
-        config?.debounce ? debounceSync() : identity,
-      );
+      return combineLatest(vm).pipe(config?.debounce ? debounceSync() : identity) as Observable<
+        ViewModel<SelectorsObject>
+      >;
     }
   }
 
