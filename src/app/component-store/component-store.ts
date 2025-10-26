@@ -114,13 +114,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
   ): Observable<Output>;
 
   protected select<
-    Output,
     SelectFn extends (state: State) => Output,
     SelectorsObject extends Record<string, Observable<unknown>>,
     SelectorsWithProjector extends [
       ...selectros: Observable<unknown>[],
       projector: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     ],
+    Output,
   >(
     ...selectorsCollection: Array<SelectFn | SelectorsObject | SelectorsWithProjector>
   ): Observable<Output | ViewModel<SelectorsObject>> {
