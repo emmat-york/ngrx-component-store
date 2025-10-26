@@ -15,8 +15,7 @@ import { StoreExample } from './example.store';
       <a href="https://www.linkedin.com/in/andrei-filimonchyk-35a033135/" target="_blank"
         >linkedin</a
       >
-    </p>
-  `,
+    </p> `,
   providers: [StoreExample],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

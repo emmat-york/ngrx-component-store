@@ -5,13 +5,13 @@ import {
   isObservable,
   Subscription,
   Observable,
-  auditTime,
   identity,
   map,
   of,
 } from 'rxjs';
 import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceSync } from './component-store.util';
 
 function isFunction(objectOrFunction: object | Function): objectOrFunction is Function {
   return typeof objectOrFunction === 'function';
@@ -24,11 +24,6 @@ type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
 type SelectorsResult<Selectors extends Observable<unknown>[]> = {
   [Key in keyof Selectors]: Selectors[Key] extends Observable<infer U> ? U : never;
 };
-
-type KeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>> = [
-  keys: Array<keyof SelectorsObject>,
-  selectors: Observable<unknown>[],
-];
 
 type SelectorsWithProjectorFunction<Output> = [
   selectors: Observable<unknown>[],
@@ -47,7 +42,6 @@ const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
 export class ComponentStore<State extends object> implements OnDestroy {
   protected readonly state$: Observable<State>;
 
-  // BehaviorSubject that holds the most recent version of the state.
   private readonly stateSubject$: BehaviorSubject<State>;
   private readonly destroyRef = inject(DestroyRef);
 
@@ -131,39 +125,25 @@ export class ComponentStore<State extends object> implements OnDestroy {
     ...selectorsCollection: Array<SelectFn | SelectorsObject | SelectorsWithProjector>
   ): Observable<Output | ViewModel<SelectorsObject>> {
     if (isFunction(selectorsCollection[0])) {
-      // Processing selectFn with config.
       const [selectFn, config] = selectorsCollection as unknown as [SelectFn, SelectConfig?];
-      const isDebounceEnabled = config?.debounce ?? false;
 
       return this.state$.pipe(
         map(selectFn),
         distinctUntilChanged(),
-        isDebounceEnabled ? auditTime(0) : identity,
+        config?.debounce ? debounceSync() : identity,
       );
     } else if (isObservable(selectorsCollection[0])) {
-      // Processing selectors with projectionFn.
       const [selectors, projector] = this.getSelectorsWithProjector<SelectorsWithProjector, Output>(
         selectorsCollection as unknown as SelectorsWithProjector,
       );
 
       return combineLatest(selectors).pipe(map(values => projector(...values)));
     } else {
-      // Processing ViewModel object with selectors.
       const [vm, config] = selectorsCollection as unknown as [SelectorsObject, SelectConfig?];
-      const [keys, selectors] = this.getKeysWithSelectors(vm);
-      const isDebounceEnabled = config?.debounce ?? false;
 
-      return combineLatest(selectors).pipe(
-        map(selectorValues => {
-          return selectorValues.reduce((viewModel: ViewModel<SelectorsObject>, value, index) => {
-            return {
-              ...viewModel,
-              [keys[index]]: value,
-            };
-          }, {} as ViewModel<SelectorsObject>);
-        }),
-        isDebounceEnabled ? auditTime(0) : identity,
-      );
+      return combineLatest(vm).pipe(config?.debounce ? debounceSync() : identity) as Observable<
+        ViewModel<SelectorsObject>
+      >;
     }
   }
 
@@ -207,13 +187,11 @@ export class ComponentStore<State extends object> implements OnDestroy {
   protected patchState(
     partialStateOrPatchStateFn: Partial<State> | ((state: State) => Partial<State>),
   ): void {
-    const frozenState = this.frozenState;
-
     const partiallyUpdatedState = isFunction(partialStateOrPatchStateFn)
-      ? partialStateOrPatchStateFn(frozenState)
+      ? partialStateOrPatchStateFn(this.frozenState)
       : partialStateOrPatchStateFn;
 
-    this.stateSubject$.next({ ...frozenState, ...partiallyUpdatedState });
+    this.stateSubject$.next({ ...this.frozenState, ...partiallyUpdatedState });
   }
 
   /**
@@ -233,20 +211,6 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
       return effectFn(source$).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     };
-  }
-
-  private getKeysWithSelectors<SelectorsObject extends Record<string, Observable<unknown>>>(
-    objectWithValuesAsSelectors: SelectorsObject,
-  ): KeysWithSelectors<SelectorsObject> {
-    const keys: Array<keyof SelectorsObject> = [];
-    const selectors: Observable<unknown>[] = [];
-
-    for (const key in objectWithValuesAsSelectors) {
-      selectors.push(objectWithValuesAsSelectors[key]);
-      keys.push(key);
-    }
-
-    return [keys, selectors];
   }
 
   private getSelectorsWithProjector<
