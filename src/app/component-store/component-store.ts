@@ -141,9 +141,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
     } else {
       const [vm, config] = selectorsCollection as unknown as [SelectorsObject, SelectConfig?];
 
-      return combineLatest(vm).pipe(config?.debounce ? debounceSync() : identity) as Observable<
-        ViewModel<SelectorsObject>
-      >;
+      return combineLatest(vm).pipe(
+        map(result => result as ViewModel<SelectorsObject>),
+        config?.debounce ? debounceSync() : identity,
+      );
     }
   }
 
