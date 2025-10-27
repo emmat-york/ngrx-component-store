@@ -25,11 +25,6 @@ type SelectorsResult<Selectors extends Observable<unknown>[]> = {
   [Key in keyof Selectors]: Selectors[Key] extends Observable<infer U> ? U : never;
 };
 
-type SelectorsWithProjectorFunction<Output> = [
-  selectors: Observable<unknown>[],
-  projector: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
-];
-
 interface SelectConfig {
   debounce: true;
 }
@@ -116,16 +111,17 @@ export class ComponentStore<State extends object> implements OnDestroy {
   protected select<
     SelectFn extends (state: State) => Output,
     SelectorsObject extends Record<string, Observable<unknown>>,
-    SelectorsWithProjector extends [
-      ...selectros: Observable<unknown>[],
-      projector: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
-    ],
+    SelectorsWithProjector extends [...selectros: Observable<unknown>[], projector: Projector],
+    Projector extends (...results: SelectorsResult<Observable<unknown>[]>) => Output,
     Output,
   >(
-    ...collection: Array<SelectFn | SelectorsObject | SelectorsWithProjector>
+    ...collection:
+      | [SelectFn, SelectConfig?]
+      | [SelectorsObject, SelectConfig?]
+      | SelectorsWithProjector
   ): Observable<Output | ViewModel<SelectorsObject>> {
     if (isFunction(collection[0])) {
-      const [selectFn, config] = collection as unknown as [SelectFn, SelectConfig?];
+      const [selectFn, config] = collection as [SelectFn, SelectConfig?];
 
       return this.state$.pipe(
         map(selectFn),
@@ -133,13 +129,12 @@ export class ComponentStore<State extends object> implements OnDestroy {
         config?.debounce ? debounceSync() : identity,
       );
     } else if (isObservable(collection[0])) {
-      const [selectors, projector] = this.getSelectorsWithProjector<SelectorsWithProjector, Output>(
-        collection as unknown as SelectorsWithProjector,
-      );
+      const selectors = collection.slice(0, -1) as Observable<unknown>[];
+      const projector = collection[collection.length - 1] as Projector;
 
       return combineLatest(selectors).pipe(map(values => projector(...values)));
     } else {
-      const [vm, config] = collection as unknown as [SelectorsObject, SelectConfig?];
+      const [vm, config] = collection as [SelectorsObject, SelectConfig?];
 
       return combineLatest(vm).pipe(config?.debounce ? debounceSync() : identity) as Observable<
         ViewModel<SelectorsObject>
@@ -211,27 +206,6 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
       return effectFn(source$).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     };
-  }
-
-  private getSelectorsWithProjector<
-    SelectorsWithProjector extends [
-      ...selectros: Observable<unknown>[],
-      projector: (...results: SelectorsResult<Observable<unknown>[]>) => Output,
-    ],
-    Output,
-  >(selectorsWithProjector: SelectorsWithProjector): SelectorsWithProjectorFunction<Output> {
-    const selectors: Observable<unknown>[] = [];
-    let projector!: (...results: SelectorsResult<Observable<unknown>[]>) => Output;
-
-    for (const selectorOrProjector of selectorsWithProjector) {
-      if (isObservable(selectorOrProjector)) {
-        selectors.push(selectorOrProjector);
-      } else {
-        projector = selectorOrProjector;
-      }
-    }
-
-    return [selectors, projector];
   }
 
   /**
