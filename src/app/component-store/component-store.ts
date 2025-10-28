@@ -11,7 +11,7 @@ import {
 } from 'rxjs';
 import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceSync } from './component-store.util';
+import { debounceSync } from './utils';
 
 type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
   [Key in keyof SelectorsObject]: SelectorsObject[Key] extends Observable<infer U> ? U : never;
