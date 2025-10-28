@@ -13,10 +13,6 @@ import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } fro
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceSync } from './component-store.util';
 
-function isFunction(objectOrFunction: object | Function): objectOrFunction is Function {
-  return typeof objectOrFunction === 'function';
-}
-
 type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
   [Key in keyof SelectorsObject]: SelectorsObject[Key] extends Observable<infer U> ? U : never;
 };
@@ -55,8 +51,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    *  - `state`: current store's state;
    *  - `payload`: any payload.
    * @return A function that accepts the payload and forwards it as the
-   * second argument to `updaterFn`. This function will update the store's state
-   * according to the update you provided.
+   * second argument to `updaterFn`. This function will update the store's state according to the update you provided.
    **/
   protected updater<Payload>(
     updaterFn: (state: State, payload: Payload) => State,
@@ -85,8 +80,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @param selectors An object whose key values are store's selectors.
    * @param config An optional object that allows controlling the frequency of value emissions in the select,
    * preventing excessive notifications during rapid state updates.
-   * @return An Observable which emits an object whose properties
-   * are the values returned by each selector in `selectors`.
+   * @return An Observable which emits an object whose properties are the values returned by each selector in `selectors`.
    **/
   protected select<Selectors extends Record<string, Observable<unknown>>>(
     selectors: Selectors,
@@ -120,7 +114,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
       | [SelectorsObject, SelectConfig?]
       | SelectorsWithProjector
   ): Observable<Output | ViewModel<SelectorsObject>> {
-    if (isFunction(collection[0])) {
+    if (typeof collection[0] === 'function') {
       const [selectFn, config] = collection as [SelectFn, SelectConfig?];
 
       return this.state$.pipe(
@@ -160,13 +154,13 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
   /**
    * @description This method allows updating the store's state.
-   * @param stateOrSetStateFn either a new state object or a function that updates
-   * the state based on the current state.
+   * @param stateOrSetStateFn either a new state object or a function that updates the state based on the current state.
    **/
   protected setState(stateOrSetStateFn: State | ((state: State) => State)): void {
-    const updatedState = isFunction(stateOrSetStateFn)
-      ? stateOrSetStateFn(this.frozenState())
-      : stateOrSetStateFn;
+    const updatedState =
+      typeof stateOrSetStateFn === 'function'
+        ? stateOrSetStateFn(this.frozenState())
+        : stateOrSetStateFn;
 
     this.stateSubject$.next(updatedState);
   }
@@ -182,9 +176,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
   protected patchState(
     partialStateOrPatchStateFn: Partial<State> | ((state: State) => Partial<State>),
   ): void {
-    const partiallyUpdatedState = isFunction(partialStateOrPatchStateFn)
-      ? partialStateOrPatchStateFn(this.frozenState())
-      : partialStateOrPatchStateFn;
+    const partiallyUpdatedState =
+      typeof partialStateOrPatchStateFn === 'function'
+        ? partialStateOrPatchStateFn(this.frozenState())
+        : partialStateOrPatchStateFn;
 
     this.stateSubject$.next({ ...this.frozenState(), ...partiallyUpdatedState });
   }
@@ -192,8 +187,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
   /**
    * @description Creates an effect function.
    * @param effectFn A function that takes an origin Observable input and
-   * returns an Observable. The Observable that is returned will be
-   * automatically subscribed.
+   * returns an Observable. The Observable that is returned will be automatically subscribed.
    * @return A function that will trigger the origin Observable.
    **/
   protected effect<Value>(
@@ -208,12 +202,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
     };
   }
 
-  /**
-   * @description This getter returns a frozen object of the most recent state.
-   * Since the store state must be immutable, we need to prevent accidental mutations.
-   * Therefore, it is provided in a frozen form.
-   **/
   private frozenState(): State {
+    // Since the store state must be immutable, we need to prevent accidental mutations. Therefore, it is provided in a frozen form.
     return Object.freeze(this.stateSubject$.getValue());
   }
 }
