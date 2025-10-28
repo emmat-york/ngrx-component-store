@@ -26,7 +26,7 @@ interface SelectConfig {
   debounce: true;
 }
 
-const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
+export const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
   'https://github.com/emmat-york/ngrx-component-store',
 );
 
@@ -54,7 +54,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @return A function that accepts the payload and forwards it as the
    * second argument to `updaterFn`. This function will update the store's state according to the update you provided.
    **/
-  protected updater<Payload>(
+  updater<Payload>(
     updaterFn: (state: State, payload: Payload) => State,
   ): (payload: Payload) => void {
     return (payload: Payload): void => {
@@ -70,10 +70,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * preventing excessive notifications during rapid state updates.
    * @return An Observable that emits the selected value.
    **/
-  protected select<Output>(
-    selectFn: (state: State) => Output,
-    config?: SelectConfig,
-  ): Observable<Output>;
+  select<Output>(selectFn: (state: State) => Output, config?: SelectConfig): Observable<Output>;
 
   /**
    * @description This method selects multiple parts of the state using the provided selectors
@@ -83,7 +80,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * preventing excessive notifications during rapid state updates.
    * @return An Observable which emits an object whose properties are the values returned by each selector in `selectors`.
    **/
-  protected select<Selectors extends Record<string, Observable<unknown>>>(
+  select<Selectors extends Record<string, Observable<unknown>>>(
     selectors: Selectors,
     config?: SelectConfig,
   ): Observable<ViewModel<Selectors>>;
@@ -96,14 +93,14 @@ export class ComponentStore<State extends object> implements OnDestroy {
    *  - `projector`: A function that takes the results of all the selectors and returns a combined output.
    * @return An Observable that emits the result of the `selectFn` applied to the selected state parts.
    **/
-  protected select<Selectors extends Observable<unknown>[], Output>(
+  select<Selectors extends Observable<unknown>[], Output>(
     ...selectorsWithProjector: [
       ...selectros: Selectors,
       projector: (...results: SelectorsResult<Selectors>) => Output,
     ]
   ): Observable<Output>;
 
-  protected select<
+  select<
     SelectFn extends (state: State) => Output,
     SelectorsObject extends Record<string, Observable<unknown>>,
     SelectorsWithProjector extends [...selectros: Observable<unknown>[], projector: Projector],
@@ -143,8 +140,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
     }
   }
 
-  protected get(): State;
-  protected get<Output>(getFn: (state: State) => Output): Output;
+  get(): State;
+  get<Output>(getFn: (state: State) => Output): Output;
 
   /**
    * @description This method returns the current state snapshot.
@@ -152,18 +149,18 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @return The current state object (if `getFn` is not provided) or a specific value,
    * depending on the selector function you provide.
    **/
-  protected get<Output>(getFn?: (state: State) => Output): State | Output {
+  get<Output>(getFn?: (state: State) => Output): State | Output {
     return getFn ? getFn(this.frozenState()) : this.frozenState();
   }
 
-  protected setState(setStateFn: (state: State) => State): void;
-  protected setState(state: State): void;
+  setState(setStateFn: (state: State) => State): void;
+  setState(state: State): void;
 
   /**
    * @description This method allows updating the store's state.
    * @param stateOrSetStateFn either a new state object or a function that updates the state based on the current state.
    **/
-  protected setState(stateOrSetStateFn: State | ((state: State) => State)): void {
+  setState(stateOrSetStateFn: State | ((state: State) => State)): void {
     const updatedState =
       typeof stateOrSetStateFn === 'function'
         ? stateOrSetStateFn(this.frozenState())
@@ -172,15 +169,15 @@ export class ComponentStore<State extends object> implements OnDestroy {
     this.stateSubject$.next(updatedState);
   }
 
-  protected patchState(state: Partial<State>): void;
-  protected patchState(patchStateFn: (state: State) => Partial<State>): void;
+  patchState(state: Partial<State>): void;
+  patchState(patchStateFn: (state: State) => Partial<State>): void;
 
   /**
    * @description This method allows partially updating the store's state.
    * @param partialStateOrPatchStateFn either a partial state object or a function that updates
    * the state, either partially or fully, based on the current state.
    **/
-  protected patchState(
+  patchState(
     partialStateOrPatchStateFn: Partial<State> | ((state: State) => Partial<State>),
   ): void {
     const partiallyUpdatedState =
@@ -197,7 +194,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * returns an Observable. The Observable that is returned will be automatically subscribed.
    * @return A function that will trigger the origin Observable.
    **/
-  protected effect<Value>(
+  effect<Value>(
     effectFn: (source$: Observable<Value>) => Observable<unknown>,
   ): (staticValueOrSource: Value | Observable<Value>) => Subscription {
     return (staticValueOrSource: Value | Observable<Value>) => {
