@@ -5,6 +5,7 @@ import {
   isObservable,
   Subscription,
   Observable,
+  shareReplay,
   identity,
   map,
   of,
@@ -120,19 +121,25 @@ export class ComponentStore<State extends object> implements OnDestroy {
       return this.state$.pipe(
         map(selectFn),
         distinctUntilChanged(),
+        shareReplay({ bufferSize: 1, refCount: true }),
         config?.debounce ? debounceSync() : identity,
       );
     } else if (isObservable(collection[0])) {
       const selectors = collection.slice(0, -1) as Observable<unknown>[];
       const projector = collection[collection.length - 1] as Projector;
 
-      return combineLatest(selectors).pipe(map(values => projector(...values)));
+      return combineLatest(selectors).pipe(
+        map(values => projector(...values)),
+        distinctUntilChanged(),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
     } else {
       const [vm, config] = collection as [SelectorsObject, SelectConfig?];
 
-      return combineLatest(vm).pipe(config?.debounce ? debounceSync() : identity) as Observable<
-        ViewModel<SelectorsObject>
-      >;
+      return combineLatest(vm).pipe(
+        shareReplay({ bufferSize: 1, refCount: true }),
+        config?.debounce ? debounceSync() : identity,
+      ) as Observable<ViewModel<SelectorsObject>>;
     }
   }
 
