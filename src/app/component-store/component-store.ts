@@ -121,7 +121,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
         shareReplay({ bufferSize: 1, refCount: true }),
         config?.debounce ? debounceSync() : identity,
       );
-    } else if (isObservable(collection[0])) {
+    } else if (isObservable(collection.at(0))) {
       const selectors = collection.slice(0, -1) as Observable<unknown>[];
       const projector = collection.at(-1) as Projector;
 
