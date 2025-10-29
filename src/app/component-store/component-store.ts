@@ -112,7 +112,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
       | [SelectorsObject, SelectConfig?]
       | SelectorsWithProjector
   ): Observable<Output | ViewModel<SelectorsObject>> {
-    if (typeof collection[0] === 'function') {
+    if (typeof collection.at(0) === 'function') {
       const [selectFn, config] = collection as [SelectFn, SelectConfig?];
 
       return this.state$.pipe(
@@ -123,7 +123,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
       );
     } else if (isObservable(collection[0])) {
       const selectors = collection.slice(0, -1) as Observable<unknown>[];
-      const projector = collection[collection.length - 1] as Projector;
+      const projector = collection.at(-1) as Projector;
 
       return combineLatest(selectors).pipe(
         map(values => projector(...values)),
@@ -206,8 +206,11 @@ export class ComponentStore<State extends object> implements OnDestroy {
     };
   }
 
+  /**
+   * @description Since the store state must be immutable, we need to prevent accidental mutations.
+   * Therefore, it is provided in a frozen form.
+   **/
   private frozenState(): State {
-    // Since the store state must be immutable, we need to prevent accidental mutations. Therefore, it is provided in a frozen form.
     return Object.freeze(this.stateSubject$.getValue());
   }
 }
