@@ -111,7 +111,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
       | [SelectFn, SelectConfig?]
       | [SelectorsObject, SelectConfig?]
       | SelectorsWithProjector
-  ): Observable<Output | ViewModel<SelectorsObject>> {
+  ) {
     if (typeof collection.at(0) === 'function') {
       const [selectFn, config] = collection as [SelectFn, SelectConfig?];
 
@@ -149,7 +149,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @return The current state object (if `getFn` is not provided) or a specific value,
    * depending on the selector function you provide.
    **/
-  get<Output>(getFn?: (state: State) => Output): State | Output {
+  get<Output>(getFn?: (state: State) => Output) {
     return getFn ? getFn(this.frozenState()) : this.frozenState();
   }
 
@@ -160,7 +160,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @description This method allows updating the store's state.
    * @param stateOrSetStateFn either a new state object or a function that updates the state based on the current state.
    **/
-  setState(stateOrSetStateFn: State | ((state: State) => State)): void {
+  setState(stateOrSetStateFn: State | ((state: State) => State)) {
     const updatedState =
       typeof stateOrSetStateFn === 'function'
         ? stateOrSetStateFn(this.frozenState())
@@ -177,9 +177,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @param partialStateOrPatchStateFn either a partial state object or a function that updates
    * the state, either partially or fully, based on the current state.
    **/
-  patchState(
-    partialStateOrPatchStateFn: Partial<State> | ((state: State) => Partial<State>),
-  ): void {
+  patchState(partialStateOrPatchStateFn: Partial<State> | ((state: State) => Partial<State>)) {
     const partiallyUpdatedState =
       typeof partialStateOrPatchStateFn === 'function'
         ? partialStateOrPatchStateFn(this.frozenState())
