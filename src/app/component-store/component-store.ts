@@ -9,21 +9,31 @@ import {
   identity,
   map,
   of,
+  ObservedValueOf,
 } from 'rxjs';
-import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
+import {
+  DestroyRef,
+  inject,
+  Inject,
+  Injectable,
+  InjectionToken,
+  isDevMode,
+  OnDestroy,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceSync } from './utils';
+import { debounceSync } from './debounce-sync.operators';
 
 type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
-  [Key in keyof SelectorsObject]: SelectorsObject[Key] extends Observable<infer U> ? U : never;
+  [Key in keyof SelectorsObject]: ObservedValueOf<SelectorsObject[Key]>;
 };
 
 type SelectorsResult<Selectors extends Observable<unknown>[]> = {
-  [Key in keyof Selectors]: Selectors[Key] extends Observable<infer U> ? U : never;
+  [Key in keyof Selectors]: ObservedValueOf<Selectors[Key]>;
 };
 
-interface SelectConfig {
-  debounce: true;
+interface SelectConfig<T = unknown> {
+  debounce?: boolean;
+  equal?: (a: T, b: T) => boolean;
 }
 
 export const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
@@ -58,7 +68,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
     updaterFn: (state: State, payload: Payload) => State,
   ): (payload: Payload) => void {
     return (payload: Payload): void => {
-      this.stateSubject$.next(updaterFn(this.frozenState(), payload));
+      this.commit(updaterFn(this.get(), payload));
     };
   }
 
@@ -70,7 +80,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * preventing excessive notifications during rapid state updates.
    * @return An Observable that emits the selected value.
    **/
-  select<Output>(selectFn: (state: State) => Output, config?: SelectConfig): Observable<Output>;
+  select<Output>(
+    selectFn: (state: State) => Output,
+    config?: SelectConfig<Output>,
+  ): Observable<Output>;
 
   /**
    * @description This method selects multiple parts of the state using the provided selectors
@@ -82,7 +95,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    **/
   select<Selectors extends Record<string, Observable<unknown>>>(
     selectors: Selectors,
-    config?: SelectConfig,
+    config?: SelectConfig<ViewModel<Selectors>>,
   ): Observable<ViewModel<Selectors>>;
 
   /**
@@ -108,18 +121,18 @@ export class ComponentStore<State extends object> implements OnDestroy {
     Output,
   >(
     ...collection:
-      | [SelectFn, SelectConfig?]
-      | [SelectorsObject, SelectConfig?]
+      | [SelectFn, SelectConfig<Output>?]
+      | [SelectorsObject, SelectConfig<ViewModel<SelectorsObject>>?]
       | SelectorsWithProjector
   ) {
     if (typeof collection.at(0) === 'function') {
-      const [selectFn, config] = collection as [SelectFn, SelectConfig?];
+      const [selectFn, config] = collection as [SelectFn, SelectConfig<Output>?];
 
       return this.state$.pipe(
         map(selectFn),
-        distinctUntilChanged(),
-        shareReplay({ bufferSize: 1, refCount: true }),
+        distinctUntilChanged(config?.equal),
         config?.debounce ? debounceSync() : identity,
+        shareReplay({ bufferSize: 1, refCount: true }),
       );
     } else if (isObservable(collection.at(0))) {
       const selectors = collection.slice(0, -1) as Observable<unknown>[];
@@ -131,11 +144,15 @@ export class ComponentStore<State extends object> implements OnDestroy {
         shareReplay({ bufferSize: 1, refCount: true }),
       );
     } else {
-      const [vm, config] = collection as [SelectorsObject, SelectConfig?];
+      const [vm, config] = collection as [
+        SelectorsObject,
+        SelectConfig<ViewModel<SelectorsObject>>?,
+      ];
 
       return combineLatest(vm).pipe(
-        shareReplay({ bufferSize: 1, refCount: true }),
+        distinctUntilChanged(config?.equal),
         config?.debounce ? debounceSync() : identity,
+        shareReplay({ bufferSize: 1, refCount: true }),
       ) as Observable<ViewModel<SelectorsObject>>;
     }
   }
@@ -150,7 +167,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * depending on the selector function you provide.
    **/
   get<Output>(getFn?: (state: State) => Output) {
-    return getFn ? getFn(this.frozenState()) : this.frozenState();
+    const state = this.stateSubject$.getValue();
+    const snapshot = isDevMode() ? structuredClone(state) : state;
+
+    return getFn ? getFn(snapshot) : snapshot;
   }
 
   setState(setStateFn: (state: State) => State): void;
@@ -162,11 +182,9 @@ export class ComponentStore<State extends object> implements OnDestroy {
    **/
   setState(stateOrSetStateFn: State | ((state: State) => State)) {
     const updatedState =
-      typeof stateOrSetStateFn === 'function'
-        ? stateOrSetStateFn(this.frozenState())
-        : stateOrSetStateFn;
+      typeof stateOrSetStateFn === 'function' ? stateOrSetStateFn(this.get()) : stateOrSetStateFn;
 
-    this.stateSubject$.next(updatedState);
+    this.commit(updatedState);
   }
 
   patchState(state: Partial<State>): void;
@@ -178,12 +196,15 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * the state, either partially or fully, based on the current state.
    **/
   patchState(partialStateOrPatchStateFn: Partial<State> | ((state: State) => Partial<State>)) {
-    const partiallyUpdatedState =
+    const state = this.get();
+    const partial =
       typeof partialStateOrPatchStateFn === 'function'
-        ? partialStateOrPatchStateFn(this.frozenState())
+        ? partialStateOrPatchStateFn(state)
         : partialStateOrPatchStateFn;
 
-    this.stateSubject$.next({ ...this.frozenState(), ...partiallyUpdatedState });
+    const safePartial = isDevMode() ? structuredClone(partial) : partial;
+
+    this.commit({ ...state, ...safePartial });
   }
 
   /**
@@ -204,11 +225,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
     };
   }
 
-  /**
-   * @description Since the store state must be immutable, we need to prevent accidental mutations.
-   * Therefore, it is provided in a frozen form.
-   **/
-  private frozenState(): State {
-    return Object.freeze(this.stateSubject$.getValue());
+  private commit(nextState: State): void {
+    const safeState = isDevMode() ? structuredClone(nextState) : nextState;
+    this.stateSubject$.next(safeState);
   }
 }
