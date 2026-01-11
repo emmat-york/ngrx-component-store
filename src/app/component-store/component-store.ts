@@ -153,7 +153,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
         distinctUntilChanged(config?.equal),
         config?.debounce ? debounceSync() : identity,
         shareReplay({ bufferSize: 1, refCount: true }),
-      ) as Observable<ViewModel<SelectorsObject>>;
+      );
     }
   }
 
