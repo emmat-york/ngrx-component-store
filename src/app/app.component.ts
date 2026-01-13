@@ -1,24 +1,61 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { StoreExample } from './example.store';
 
+/**
+ * get
+ * 1. full
+ * 2. fn
+ *
+ * setState
+ * 1. full
+ * 2. fn
+ *
+ * patchState
+ * 1. partial object
+ * 2. fn
+ *
+ * effect
+ *
+ * 1. void
+ * 2. with payload
+ *
+ * updater
+ *
+ * select
+ *
+ * 1. fn
+ * 2. vm
+ * 3. selectors + projectorFn
+ *
+ **/
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  template: `<p>
-      <a
-        href="https://github.com/emmat-york/ngrx-component-store/blob/master/src/app/component-store/component-store.ts"
-        target="_blank"
-        >github</a
-      >
-    </p>
-    <p>
-      <a href="https://www.linkedin.com/in/andrei-filimonchyk-35a033135/" target="_blank"
-        >linkedin</a
-      >
-    </p> `,
+  templateUrl: 'app.component.html',
   providers: [StoreExample],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
+  protected readonly entireState$ = this.store.entireState$;
+  protected readonly map$ = this.store.map$;
+  protected readonly vm$ = this.store.vm$;
+
   constructor(private store: StoreExample) {}
+
+  onGet(): void {
+    console.log('get: ', this.store.get());
+  }
+
+  patchCarBrand(): void {
+    this.store.patchCarBrand('BMW');
+  }
+
+  patchInitials(): void {
+    this.store.patchInitials('Varvara', 'V');
+  }
+
+  resetState(): void {
+    this.store.resetState();
+  }
 }
