@@ -31,7 +31,7 @@ type SelectorsResult<Selectors extends Observable<unknown>[]> = {
   [Key in keyof Selectors]: ObservedValueOf<Selectors[Key]>;
 };
 
-interface SelectConfig<T = unknown> {
+interface SelectConfig<T> {
   debounce?: boolean;
   equal?: (a: T, b: T) => boolean;
 }
@@ -134,7 +134,9 @@ export class ComponentStore<State extends object> implements OnDestroy {
         config?.debounce ? debounceSync() : identity,
         shareReplay({ bufferSize: 1, refCount: true }),
       );
-    } else if (isObservable(collection.at(0))) {
+    }
+
+    if (isObservable(collection.at(0))) {
       const selectors = collection.slice(0, -1) as Observable<unknown>[];
       const projector = collection.at(-1) as Projector;
 
@@ -143,18 +145,15 @@ export class ComponentStore<State extends object> implements OnDestroy {
         distinctUntilChanged(),
         shareReplay({ bufferSize: 1, refCount: true }),
       );
-    } else {
-      const [vm, config] = collection as [
-        SelectorsObject,
-        SelectConfig<ViewModel<SelectorsObject>>?,
-      ];
-
-      return combineLatest(vm).pipe(
-        distinctUntilChanged(config?.equal),
-        config?.debounce ? debounceSync() : identity,
-        shareReplay({ bufferSize: 1, refCount: true }),
-      );
     }
+
+    const [vm, config] = collection as [SelectorsObject, SelectConfig<ViewModel<SelectorsObject>>?];
+
+    return combineLatest(vm).pipe(
+      distinctUntilChanged(config?.equal),
+      config?.debounce ? debounceSync() : identity,
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
   }
 
   get(): State;
