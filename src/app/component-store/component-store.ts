@@ -167,9 +167,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
    **/
   get<Output>(getFn?: (state: State) => Output) {
     const state = this.stateSubject$.getValue();
-    const snapshot = isDevMode() ? structuredClone(state) : state;
-
-    return getFn ? getFn(snapshot) : snapshot;
+    return getFn ? getFn(state) : state;
   }
 
   setState(setStateFn: (state: State) => State): void;
@@ -201,9 +199,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
         ? partialStateOrPatchStateFn(state)
         : partialStateOrPatchStateFn;
 
-    const safePartial = isDevMode() ? structuredClone(partial) : partial;
-
-    this.commit({ ...state, ...safePartial });
+    this.commit({ ...state, ...partial });
   }
 
   /**
@@ -225,7 +221,6 @@ export class ComponentStore<State extends object> implements OnDestroy {
   }
 
   private commit(nextState: State): void {
-    const safeState = isDevMode() ? structuredClone(nextState) : nextState;
-    this.stateSubject$.next(safeState);
+    this.stateSubject$.next(nextState);
   }
 }

@@ -2,11 +2,6 @@ import { Injectable } from '@angular/core';
 import { ComponentStore } from './component-store/component-store';
 import { delay, finalize, Observable, of, switchMap, tap } from 'rxjs';
 
-export interface Initials {
-  name: string;
-  sureName: string;
-}
-
 export interface Contact {
   name: string;
   email: string;
@@ -46,8 +41,6 @@ export class StoreExample extends ComponentStore<ExampleState> {
   private readonly car$ = this.select(state => state.car);
   private readonly age$ = this.select(state => state.age);
 
-  readonly entireState$ = this.state$;
-
   readonly vm$ = this.select(
     {
       personName: this.name$,
@@ -56,7 +49,7 @@ export class StoreExample extends ComponentStore<ExampleState> {
       personAge: this.age$,
     },
     { debounce: true },
-  );
+  ).pipe(tap(v => console.log('vm$: ', v)));
 
   readonly map$ = this.select(
     this.name$,
@@ -68,7 +61,7 @@ export class StoreExample extends ComponentStore<ExampleState> {
       isAllowedToDriveCar: Number(age) >= 18,
       car,
     }),
-  );
+  ).pipe(tap(v => console.log('map$: ', v)));
 
   readonly updaterExample = this.updater((state, sureName: string) => ({
     ...state,
@@ -78,12 +71,13 @@ export class StoreExample extends ComponentStore<ExampleState> {
   readonly effectExample = this.effect((id$: Observable<number>) => {
     return id$.pipe(
       switchMap(id => {
+        console.log('effectExample has been started.');
         this.setLoading(true);
-        return of({ id, contacts: [] }).pipe(delay(1000));
+        return of({ id, contacts: [] }).pipe(delay(2000));
       }),
       tap({
         next: ({ contacts }) => {
-          console.log('Settings the contacts.');
+          console.log('Set the contacts.');
           this.setContacts(contacts);
         },
         error: error => console.error(error),
@@ -97,7 +91,7 @@ export class StoreExample extends ComponentStore<ExampleState> {
     return voidSource$.pipe(
       switchMap(() => {
         this.setLoading(true);
-        return of({ description: 'Void effect example.' }).pipe(delay(1000));
+        return of({ description: 'Void effect example.' }).pipe(delay(2000));
       }),
       tap({
         next: data => console.log(data),
@@ -110,14 +104,6 @@ export class StoreExample extends ComponentStore<ExampleState> {
 
   constructor() {
     super(INITIAL_STATE);
-  }
-
-  getSnapshot(): ExampleState {
-    return this.get();
-  }
-
-  getInitials(): Initials {
-    return this.get(state => ({ name: state.name, sureName: state.sureName }));
   }
 
   setContacts(contacts: Contact[]): void {
@@ -142,11 +128,11 @@ export class StoreExample extends ComponentStore<ExampleState> {
     });
   }
 
-  patchCarBrand(brand: string): void {
+  patchWithFn(brand: string): void {
     this.patchState(state => ({ car: { ...state.car, brand } }));
   }
 
-  patchInitials(name: string, sureName: string): void {
+  patchWithObjects(name: string, sureName: string): void {
     this.patchState({ name, sureName });
   }
 }
