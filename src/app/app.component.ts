@@ -12,8 +12,8 @@ import { AsyncPipe, NgIf } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  protected readonly map$ = this.store.map$;
-  protected readonly vm$ = this.store.vm$;
+  readonly map$ = this.store.map$;
+  readonly vm$ = this.store.vm$;
 
   constructor(private store: StoreExample) {}
 

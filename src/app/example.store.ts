@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore } from './component-store/component-store';
-import { delay, finalize, Observable, of, switchMap, tap } from 'rxjs';
+import { catchError, delay, EMPTY, Observable, of, switchMap, tap } from 'rxjs';
 
 export interface Contact {
   name: string;
@@ -71,34 +71,38 @@ export class StoreExample extends ComponentStore<ExampleState> {
   readonly effectExample = this.effect((id$: Observable<number>) => {
     return id$.pipe(
       switchMap(id => {
-        console.log('effectExample has been started.');
+        console.log('Payload effect has been started.');
         this.setLoading(true);
         return of({ id, contacts: [] }).pipe(delay(2000));
       }),
       tap({
         next: ({ contacts }) => {
-          console.log('Set the contacts.');
+          console.log('Payload side effect has been executed.');
           this.setContacts(contacts);
         },
-        error: error => console.error(error),
-        complete: () => console.log('Effect has been completed.'),
+        complete: () => console.log('Payload effect has been completed.'),
+        finalize: () => this.setLoading(false),
       }),
-      finalize(() => this.setLoading(false)),
+      catchError(() => EMPTY),
     );
   });
 
   readonly voidEffectExample = this.effect<void>(voidSource$ => {
     return voidSource$.pipe(
       switchMap(() => {
+        console.log('Void effect has been started.');
         this.setLoading(true);
         return of({ description: 'Void effect example.' }).pipe(delay(2000));
       }),
       tap({
-        next: data => console.log(data),
-        error: error => console.error(error),
+        next: data => {
+          console.log('Void side effect has been executed.');
+          console.log(data);
+        },
         complete: () => console.log('Void effect has been completed.'),
+        finalize: () => this.setLoading(false),
       }),
-      finalize(() => this.setLoading(false)),
+      catchError(() => EMPTY),
     );
   });
 
