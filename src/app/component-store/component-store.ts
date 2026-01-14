@@ -11,15 +11,7 @@ import {
   of,
   ObservedValueOf,
 } from 'rxjs';
-import {
-  DestroyRef,
-  inject,
-  Inject,
-  Injectable,
-  InjectionToken,
-  isDevMode,
-  OnDestroy,
-} from '@angular/core';
+import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceSync } from './debounce-sync.operators';
 
