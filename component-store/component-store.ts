@@ -13,7 +13,7 @@ import {
 } from 'rxjs';
 import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceSync } from './debounce-sync.operators';
+import { debounceSync } from './rxjs-operators';
 
 type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
   [Key in keyof SelectorsObject]: ObservedValueOf<SelectorsObject[Key]>;

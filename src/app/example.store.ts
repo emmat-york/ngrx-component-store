@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ComponentStore } from './component-store/component-store';
+import { ComponentStore } from '@ngrx-component-store';
 import { catchError, delay, EMPTY, Observable, of, switchMap, tap } from 'rxjs';
 
 export interface Contact {
