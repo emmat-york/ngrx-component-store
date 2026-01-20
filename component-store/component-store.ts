@@ -133,6 +133,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
         distinctUntilChanged(config?.equal),
         config?.debounce ? debounceSync() : identity,
         shareReplay({ bufferSize: 1, refCount: true }),
+        takeUntilDestroyed(this.destroyRef),
       );
     }
 
@@ -144,6 +145,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
         map(values => projector(...values)),
         distinctUntilChanged(),
         shareReplay({ bufferSize: 1, refCount: true }),
+        takeUntilDestroyed(this.destroyRef),
       );
     }
 
@@ -153,6 +155,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
       distinctUntilChanged(config?.equal),
       config?.debounce ? debounceSync() : identity,
       shareReplay({ bufferSize: 1, refCount: true }),
+      takeUntilDestroyed(this.destroyRef),
     );
   }
 
