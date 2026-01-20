@@ -11,7 +11,15 @@ import {
   of,
   ObservedValueOf,
 } from 'rxjs';
-import { DestroyRef, inject, Inject, Injectable, InjectionToken, OnDestroy } from '@angular/core';
+import {
+  DestroyRef,
+  inject,
+  Inject,
+  Injectable,
+  InjectionToken,
+  OnDestroy,
+  ValueEqualityFn,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceSync } from './rxjs-operators';
 
@@ -25,7 +33,7 @@ type SelectorsResult<Selectors extends Observable<unknown>[]> = {
 
 interface SelectConfig<T> {
   debounce?: boolean;
-  equal?: (a: T, b: T) => boolean;
+  equal?: ValueEqualityFn<T>;
 }
 
 export const INITIAL_STATE_INJECTION_TOKEN = new InjectionToken<unknown>(
