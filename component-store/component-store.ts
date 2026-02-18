@@ -21,7 +21,7 @@ import {
   ValueEqualityFn,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceSync } from './rxjs-operators';
+import { debounceSync } from './debounce-sync';
 
 function isSelectConfig<T>(value: unknown): value is SelectConfig<T> {
   return (
