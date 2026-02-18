@@ -23,6 +23,12 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceSync } from './rxjs-operators';
 
+function isSelectConfig<T>(value: unknown): value is SelectConfig<T> {
+  return (
+    value !== null && typeof value === 'object' && !Array.isArray(value) && !isObservable(value)
+  );
+}
+
 type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
   [Key in keyof SelectorsObject]: ObservedValueOf<SelectorsObject[Key]>;
 };
@@ -30,6 +36,10 @@ type ViewModel<SelectorsObject extends Record<string, Observable<unknown>>> = {
 type SelectorsResult<Selectors extends Observable<unknown>[]> = {
   [Key in keyof Selectors]: ObservedValueOf<Selectors[Key]>;
 };
+
+type ProjectorFn<Selectors extends Observable<unknown>[], Output> = (
+  ...results: SelectorsResult<Selectors>
+) => Output;
 
 interface SelectConfig<T> {
   debounce?: boolean;
@@ -107,23 +117,30 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @return An Observable that emits the result of the `selectFn` applied to the selected state parts.
    **/
   select<Selectors extends Observable<unknown>[], Output>(
-    ...selectorsWithProjector: [
-      ...selectros: Selectors,
-      projector: (...results: SelectorsResult<Selectors>) => Output,
-    ]
+    ...selectorsWithProjector:
+      | [...selectros: Selectors, projector: ProjectorFn<Selectors, Output>]
+      | [
+          ...selectros: Selectors,
+          projector: ProjectorFn<Selectors, Output>,
+          config: SelectConfig<Output>,
+        ]
   ): Observable<Output>;
 
   select<
     SelectFn extends (state: State) => Output,
     SelectorsObject extends Record<string, Observable<unknown>>,
-    SelectorsWithProjector extends [...selectros: Observable<unknown>[], projector: Projector],
-    Projector extends (...results: SelectorsResult<Observable<unknown>[]>) => Output,
+    Selectors extends Observable<unknown>[],
     Output,
   >(
     ...collection:
       | [SelectFn, SelectConfig<Output>?]
       | [SelectorsObject, SelectConfig<ViewModel<SelectorsObject>>?]
-      | SelectorsWithProjector
+      | [...selectors: Selectors, projector: ProjectorFn<Selectors, Output>]
+      | [
+          ...selectors: Selectors,
+          projector: ProjectorFn<Selectors, Output>,
+          config: SelectConfig<Output>,
+        ]
   ) {
     if (typeof collection.at(0) === 'function') {
       const [selectFn, config] = collection as [SelectFn, SelectConfig<Output>?];
@@ -138,12 +155,20 @@ export class ComponentStore<State extends object> implements OnDestroy {
     }
 
     if (isObservable(collection.at(0))) {
-      const selectors = collection.slice(0, -1) as Observable<unknown>[];
-      const projector = collection.at(-1) as Projector;
+      const last = collection.at(-1);
+      const hasConfig = isSelectConfig<Output>(last);
+      const config = hasConfig ? last : undefined;
+
+      const projector = (hasConfig ? collection.at(-2) : last) as ProjectorFn<Selectors, Output>;
+
+      const selectors = (
+        hasConfig ? collection.slice(0, -2) : collection.slice(0, -1)
+      ) as Observable<unknown>[];
 
       return combineLatest(selectors).pipe(
-        map(values => projector(...values)),
-        distinctUntilChanged(),
+        map(values => projector(...(values as SelectorsResult<Selectors>))),
+        distinctUntilChanged(config?.equal),
+        config?.debounce ? debounceSync() : identity,
         shareReplay({ bufferSize: 1, refCount: true }),
         takeUntilDestroyed(this.destroyRef),
       );

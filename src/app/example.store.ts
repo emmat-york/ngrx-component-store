@@ -61,6 +61,7 @@ export class StoreExample extends ComponentStore<ExampleState> {
       isAllowedToDriveCar: Number(age) >= 18,
       car,
     }),
+    { debounce: true },
   ).pipe(tap(v => console.log('map$: ', v)));
 
   readonly updaterExample = this.updater((state, sureName: string) => ({
