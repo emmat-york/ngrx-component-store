@@ -1,0 +1,158 @@
+import { ComponentStore, INITIAL_STATE_INJECTION_TOKEN } from './component-store';
+import { TestBed } from '@angular/core/testing';
+
+interface ComponentStoreState {
+  name: string;
+  age: number;
+  car: {
+    brand: string;
+    isElectric: boolean;
+  };
+  isMarried: boolean;
+}
+
+const INITIAL_STATE: ComponentStoreState = {
+  name: 'Andrei',
+  age: 30,
+  car: {
+    brand: 'BMW',
+    isElectric: false,
+  },
+  isMarried: false,
+};
+
+describe('ComponentStore', () => {
+  let componentStore: ComponentStore<ComponentStoreState>;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        ComponentStore,
+        { provide: INITIAL_STATE_INJECTION_TOKEN, useValue: INITIAL_STATE },
+      ],
+    });
+
+    componentStore = TestBed.inject(ComponentStore) as ComponentStore<ComponentStoreState>;
+  });
+
+  it('should be created', () => {
+    expect(componentStore).toBeDefined();
+  });
+
+  it('init state check', () => {
+    const initialState = componentStore.get();
+    expect(initialState).toEqual(INITIAL_STATE);
+  });
+
+  it("'get with fn' should return correct snapshot", () => {
+    const partialState = {
+      name: 'Emmat',
+      car: { brand: 'Tesla', isElectric: true },
+    };
+
+    componentStore.patchState(partialState);
+
+    const result = componentStore.get(state => ({ name: state.name, car: state.car }));
+
+    expect(result).toEqual(partialState);
+  });
+
+  it("'get' should return correct snapshot", () => {
+    const newState: ComponentStoreState = {
+      name: 'Darth Vader',
+      age: 40,
+      car: {
+        brand: 'Space vessel',
+        isElectric: true,
+      },
+      isMarried: true,
+    };
+
+    componentStore.setState(newState);
+
+    const result = componentStore.get();
+
+    expect(result).toEqual(newState);
+  });
+
+  it("'updater' should update state correctly", () => {
+    const newValues = {
+      name: 'Darth Sidious',
+      car: { brand: 'Executor', isElectric: true },
+    };
+
+    const updaterFn = componentStore.updater<{
+      name: string;
+      car: { brand: string; isElectric: boolean };
+    }>((state, payload) => ({ ...state, ...payload }));
+
+    updaterFn(newValues);
+
+    const currentState = componentStore.get();
+    const expectedState: ComponentStoreState = { ...currentState, ...newValues };
+
+    expect(expectedState).toEqual(currentState);
+  });
+
+  it("'setState' should set state correctly", () => {
+    const newState: ComponentStoreState = {
+      name: 'Han Solo',
+      age: 33,
+      car: {
+        brand: 'Millennium Falcon',
+        isElectric: true,
+      },
+      isMarried: true,
+    };
+
+    componentStore.setState(newState);
+
+    const result = componentStore.get();
+
+    expect(newState).toEqual(result);
+  });
+
+  it("'setState with fn' should set state correctly", () => {
+    componentStore.setState(state => ({ ...state, age: 41, name: state.car.brand }));
+
+    const currentState = componentStore.get();
+
+    expect(currentState).toEqual({ ...INITIAL_STATE, age: 41, name: INITIAL_STATE.car.brand });
+  });
+
+  it("'patchState' should patch state correctly", () => {
+    const partialState = {
+      name: 'Han Solo',
+      car: {
+        brand: 'Millennium Falcon',
+        isElectric: true,
+      },
+    };
+
+    componentStore.patchState(partialState);
+
+    const currentState = componentStore.get();
+    const expectedState: ComponentStoreState = { ...currentState, ...partialState };
+
+    expect(expectedState).toEqual(currentState);
+  });
+
+  it("'patchState with fn' should patch state correctly", () => {
+    componentStore.patchState(state => ({
+      ...state,
+      name: 'Qui-Gon Jinn',
+      car: { brand: state.name, isElectric: true },
+    }));
+
+    const currentState = componentStore.get();
+    const expectedState: ComponentStoreState = {
+      ...currentState,
+      name: 'Qui-Gon Jinn',
+      car: { brand: INITIAL_STATE.name, isElectric: true },
+    };
+
+    expect(expectedState).toEqual(currentState);
+  });
+
+  it("'effect' should execute correctly", () => {});
+});
