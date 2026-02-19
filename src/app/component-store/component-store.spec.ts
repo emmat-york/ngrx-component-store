@@ -36,238 +36,261 @@ describe('ComponentStore', () => {
     componentStore = TestBed.inject(ComponentStore) as ComponentStore<ComponentStoreState>;
   });
 
-  it('should be created', () => {
-    expect(componentStore).toBeDefined();
-  });
-
-  it('init state check', () => {
-    const currentState = componentStore.get();
-
-    expect(currentState).toEqual(INITIAL_STATE);
-  });
-
-  it("'get with fn' should return correct snapshot", () => {
-    const partialState = {
-      name: 'Emmat',
-      car: { brand: 'Tesla', isElectric: true },
-    };
-
-    componentStore.patchState(partialState);
-
-    const result = componentStore.get(state => ({ name: state.name, car: state.car }));
-
-    expect(result).toEqual(partialState);
-  });
-
-  it("'get' should return correct snapshot", () => {
-    const newState: ComponentStoreState = {
-      name: 'Darth Vader',
-      age: 40,
-      car: {
-        brand: 'Space vessel',
-        isElectric: true,
-      },
-      isMarried: true,
-    };
-
-    componentStore.setState(newState);
-
-    const result = componentStore.get();
-
-    expect(result).toEqual(newState);
-  });
-
-  it("'updater' should update state correctly", () => {
-    const newValues = {
-      name: 'Darth Sidious',
-      car: { brand: 'Executor', isElectric: true },
-    };
-
-    const updaterFn = componentStore.updater<{
-      name: string;
-      car: { brand: string; isElectric: boolean };
-    }>((state, payload) => ({ ...state, ...payload }));
-
-    updaterFn(newValues);
-
-    const currentState = componentStore.get();
-
-    const expectedState: ComponentStoreState = {
-      age: INITIAL_STATE.age,
-      isMarried: INITIAL_STATE.isMarried,
-      ...newValues,
-    };
-
-    expect(expectedState).toEqual(currentState);
-  });
-
-  it("'updater' should use latest state on consecutive calls", () => {
-    const inc = componentStore.updater<number>((state, by) => ({ ...state, age: state.age + by }));
-
-    inc(1);
-    inc(2);
-
-    const currentState = componentStore.get();
-
-    expect(currentState.age).toBe(INITIAL_STATE.age + 3);
-  });
-
-  it("'setState' should set state correctly", () => {
-    const newState: ComponentStoreState = {
-      name: 'Han Solo',
-      age: 33,
-      car: {
-        brand: 'Millennium Falcon',
-        isElectric: true,
-      },
-      isMarried: true,
-    };
-
-    componentStore.setState(newState);
-
-    const result = componentStore.get();
-
-    expect(newState).toEqual(result);
-  });
-
-  it("'setState with fn' should set state correctly", () => {
-    componentStore.setState(state => ({ ...state, age: 41, name: state.car.brand }));
-
-    const currentState = componentStore.get();
-
-    expect(currentState).toEqual({ ...INITIAL_STATE, age: 41, name: INITIAL_STATE.car.brand });
-  });
-
-  it("'setState(fn)' should use latest state on consecutive calls", () => {
-    componentStore.setState(state => ({ ...state, age: state.age + 1 }));
-    componentStore.setState(state => ({ ...state, age: state.age + 1 }));
-
-    const currentState = componentStore.get();
-
-    expect(currentState.age).toBe(INITIAL_STATE.age + 2);
-  });
-
-  it("'patchState' should patch state correctly", () => {
-    const partialState = {
-      name: 'Han Solo',
-      car: {
-        brand: 'Millennium Falcon',
-        isElectric: true,
-      },
-    };
-
-    componentStore.patchState(partialState);
-
-    const currentState = componentStore.get();
-
-    const expectedState: ComponentStoreState = {
-      age: INITIAL_STATE.age,
-      isMarried: INITIAL_STATE.isMarried,
-      ...partialState,
-    };
-
-    expect(expectedState).toEqual(currentState);
-  });
-
-  it("'patchState with fn' should patch state correctly", () => {
-    componentStore.patchState(state => ({
-      name: 'Qui-Gon Jinn',
-      car: { brand: state.name, isElectric: true },
-    }));
-
-    const currentState = componentStore.get();
-
-    const expectedState: ComponentStoreState = {
-      name: 'Qui-Gon Jinn',
-      car: { brand: INITIAL_STATE.name, isElectric: true },
-      age: INITIAL_STATE.age,
-      isMarried: INITIAL_STATE.isMarried,
-    };
-
-    expect(expectedState).toEqual(currentState);
-  });
-
-  it("'patchState' should shallow-merge (nested object replaced)", () => {
-    componentStore.patchState({
-      car: { brand: 'Tesla', isElectric: true },
+  describe('initialization', () => {
+    it('should be created', () => {
+      expect(componentStore).toBeDefined();
     });
 
-    componentStore.patchState(state => ({
-      car: { ...state.car, brand: 'Audi' },
-    }));
+    it('init state check', () => {
+      const currentState = componentStore.get();
 
-    const currentState = componentStore.get();
-    const expectedState = {
-      ...INITIAL_STATE,
-      car: { isElectric: true, brand: 'Audi' },
-    };
-
-    expect(expectedState).toEqual(currentState);
+      expect(currentState).toEqual(INITIAL_STATE);
+    });
   });
 
-  it("'effect' should execute with static value", () => {
-    const calls: string[] = [];
+  describe('get', () => {
+    it("'get with fn' should return correct snapshot", () => {
+      const partialState = {
+        name: 'Emmat',
+        car: { brand: 'Tesla', isElectric: true },
+      };
 
-    const trigger = componentStore.effect<string>(source$ => source$.pipe(tap(v => calls.push(v))));
+      componentStore.patchState(partialState);
 
-    trigger('hello');
+      const result = componentStore.get(state => ({ name: state.name, car: state.car }));
 
-    expect(calls).toEqual(['hello']);
+      expect(result).toEqual(partialState);
+    });
+
+    it("'get' should return correct snapshot", () => {
+      const newState: ComponentStoreState = {
+        name: 'Darth Vader',
+        age: 40,
+        car: {
+          brand: 'Space vessel',
+          isElectric: true,
+        },
+        isMarried: true,
+      };
+
+      componentStore.setState(newState);
+
+      const result = componentStore.get();
+
+      expect(result).toEqual(newState);
+    });
   });
 
-  it("'effect' should execute with Observable input", () => {
-    const calls: number[] = [];
+  describe('updater', () => {
+    it("'updater' should update state correctly", () => {
+      const newValues = {
+        name: 'Darth Sidious',
+        car: { brand: 'Executor', isElectric: true },
+      };
 
-    const trigger = componentStore.effect<number>(source$ => source$.pipe(tap(v => calls.push(v))));
+      const updaterFn = componentStore.updater<{
+        name: string;
+        car: { brand: string; isElectric: boolean };
+      }>((state, payload) => ({ ...state, ...payload }));
 
-    const input$ = new Subject<number>();
+      updaterFn(newValues);
 
-    trigger(input$);
+      const currentState = componentStore.get();
 
-    input$.next(1);
-    input$.next(2);
+      const expectedState: ComponentStoreState = {
+        age: INITIAL_STATE.age,
+        isMarried: INITIAL_STATE.isMarried,
+        ...newValues,
+      };
 
-    expect(calls).toEqual([1, 2]);
+      expect(expectedState).toEqual(currentState);
+    });
+
+    it("'updater' should use latest state on consecutive calls", () => {
+      const inc = componentStore.updater<number>((state, by) => ({
+        ...state,
+        age: state.age + by,
+      }));
+
+      inc(1);
+      inc(2);
+
+      const currentState = componentStore.get();
+
+      expect(currentState.age).toBe(INITIAL_STATE.age + 3);
+    });
   });
 
-  it("'effect' should stop when subscription unsubscribed", () => {
-    const calls: number[] = [];
+  describe('setState', () => {
+    it("'setState' should set state correctly", () => {
+      const newState: ComponentStoreState = {
+        name: 'Han Solo',
+        age: 33,
+        car: {
+          brand: 'Millennium Falcon',
+          isElectric: true,
+        },
+        isMarried: true,
+      };
 
-    const trigger = componentStore.effect<number>(source$ => source$.pipe(tap(v => calls.push(v))));
+      componentStore.setState(newState);
 
-    const input$ = new Subject<number>();
-    const sub = trigger(input$);
+      const result = componentStore.get();
 
-    input$.next(1);
-    sub.unsubscribe();
-    input$.next(2);
+      expect(newState).toEqual(result);
+    });
 
-    expect(calls).toEqual([1]);
+    it("'setState with fn' should set state correctly", () => {
+      componentStore.setState(state => ({ ...state, age: 41, name: state.car.brand }));
+
+      const currentState = componentStore.get();
+
+      expect(currentState).toEqual({ ...INITIAL_STATE, age: 41, name: INITIAL_STATE.car.brand });
+    });
+
+    it("'setState(fn)' should use latest state on consecutive calls", () => {
+      componentStore.setState(state => ({ ...state, age: state.age + 1 }));
+      componentStore.setState(state => ({ ...state, age: state.age + 1 }));
+
+      const currentState = componentStore.get();
+
+      expect(currentState.age).toBe(INITIAL_STATE.age + 2);
+    });
   });
 
-  it("'effect' should support multiple triggers", () => {
-    const calls: string[] = [];
+  describe('patchState', () => {
+    it("'patchState' should patch state correctly", () => {
+      const partialState = {
+        name: 'Han Solo',
+        car: {
+          brand: 'Millennium Falcon',
+          isElectric: true,
+        },
+      };
 
-    const trigger = componentStore.effect<string>(source$ => source$.pipe(tap(v => calls.push(v))));
+      componentStore.patchState(partialState);
 
-    trigger('a');
-    trigger('b');
-    trigger('c');
+      const currentState = componentStore.get();
 
-    expect(calls).toEqual(['a', 'b', 'c']);
+      const expectedState: ComponentStoreState = {
+        age: INITIAL_STATE.age,
+        isMarried: INITIAL_STATE.isMarried,
+        ...partialState,
+      };
+
+      expect(expectedState).toEqual(currentState);
+    });
+
+    it("'patchState with fn' should patch state correctly", () => {
+      componentStore.patchState(state => ({
+        name: 'Qui-Gon Jinn',
+        car: { brand: state.name, isElectric: true },
+      }));
+
+      const currentState = componentStore.get();
+
+      const expectedState: ComponentStoreState = {
+        name: 'Qui-Gon Jinn',
+        car: { brand: INITIAL_STATE.name, isElectric: true },
+        age: INITIAL_STATE.age,
+        isMarried: INITIAL_STATE.isMarried,
+      };
+
+      expect(expectedState).toEqual(currentState);
+    });
+
+    it("'patchState' should shallow-merge (nested object replaced)", () => {
+      componentStore.patchState({
+        car: { brand: 'Tesla', isElectric: true },
+      });
+
+      componentStore.patchState(state => ({
+        car: { ...state.car, brand: 'Audi' },
+      }));
+
+      const currentState = componentStore.get();
+      const expectedState = {
+        ...INITIAL_STATE,
+        car: { isElectric: true, brand: 'Audi' },
+      };
+
+      expect(expectedState).toEqual(currentState);
+    });
   });
 
-  it("'effect' should be able to update state (integration)", () => {
-    const incAge = componentStore.updater<number>((state, by) => ({
-      ...state,
-      age: state.age + by,
-    }));
+  describe('effect', () => {
+    it("'effect' should execute with static value", () => {
+      const calls: string[] = [];
 
-    const trigger = componentStore.effect<number>(source$ => source$.pipe(tap(by => incAge(by))));
+      const trigger = componentStore.effect<string>(source$ =>
+        source$.pipe(tap(v => calls.push(v))),
+      );
 
-    trigger(5);
+      trigger('hello');
 
-    expect(componentStore.get().age).toBe(INITIAL_STATE.age + 5);
+      expect(calls).toEqual(['hello']);
+    });
+
+    it("'effect' should execute with Observable input", () => {
+      const calls: number[] = [];
+
+      const trigger = componentStore.effect<number>(source$ =>
+        source$.pipe(tap(v => calls.push(v))),
+      );
+
+      const input$ = new Subject<number>();
+
+      trigger(input$);
+
+      input$.next(1);
+      input$.next(2);
+
+      expect(calls).toEqual([1, 2]);
+    });
+
+    it("'effect' should stop when subscription unsubscribed", () => {
+      const calls: number[] = [];
+
+      const trigger = componentStore.effect<number>(source$ =>
+        source$.pipe(tap(v => calls.push(v))),
+      );
+
+      const input$ = new Subject<number>();
+      const sub = trigger(input$);
+
+      input$.next(1);
+      sub.unsubscribe();
+      input$.next(2);
+
+      expect(calls).toEqual([1]);
+    });
+
+    it("'effect' should support multiple triggers", () => {
+      const calls: string[] = [];
+
+      const trigger = componentStore.effect<string>(source$ =>
+        source$.pipe(tap(v => calls.push(v))),
+      );
+
+      trigger('a');
+      trigger('b');
+      trigger('c');
+
+      expect(calls).toEqual(['a', 'b', 'c']);
+    });
+
+    it("'effect' should be able to update state (integration)", () => {
+      const incAge = componentStore.updater<number>((state, by) => ({
+        ...state,
+        age: state.age + by,
+      }));
+
+      const trigger = componentStore.effect<number>(source$ => source$.pipe(tap(by => incAge(by))));
+
+      trigger(5);
+
+      expect(componentStore.get().age).toBe(INITIAL_STATE.age + 5);
+    });
   });
 
   it("'ngOnDestroy' should complete state$", () => {
