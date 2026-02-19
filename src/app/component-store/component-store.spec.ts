@@ -1,5 +1,6 @@
 import { ComponentStore, INITIAL_STATE_INJECTION_TOKEN } from './component-store';
 import { TestBed } from '@angular/core/testing';
+import { Subject, tap } from 'rxjs';
 
 interface ComponentStoreState {
   name: string;
@@ -166,5 +167,68 @@ describe('ComponentStore', () => {
     expect(expectedState).toEqual(currentState);
   });
 
-  it("'effect' should execute correctly", () => {});
+  it("'effect' should execute with static value", () => {
+    const calls: string[] = [];
+
+    const trigger = componentStore.effect<string>(source$ => source$.pipe(tap(v => calls.push(v))));
+
+    trigger('hello');
+
+    expect(calls).toEqual(['hello']);
+  });
+
+  it("'effect' should execute with Observable input", () => {
+    const calls: number[] = [];
+
+    const trigger = componentStore.effect<number>(source$ => source$.pipe(tap(v => calls.push(v))));
+
+    const input$ = new Subject<number>();
+
+    trigger(input$);
+
+    input$.next(1);
+    input$.next(2);
+
+    expect(calls).toEqual([1, 2]);
+  });
+
+  it("'effect' should stop when subscription unsubscribed", () => {
+    const calls: number[] = [];
+
+    const trigger = componentStore.effect<number>(source$ => source$.pipe(tap(v => calls.push(v))));
+
+    const input$ = new Subject<number>();
+    const sub = trigger(input$);
+
+    input$.next(1);
+    sub.unsubscribe();
+    input$.next(2);
+
+    expect(calls).toEqual([1]);
+  });
+
+  it("'effect' should support multiple triggers", () => {
+    const calls: string[] = [];
+
+    const trigger = componentStore.effect<string>(source$ => source$.pipe(tap(v => calls.push(v))));
+
+    trigger('a');
+    trigger('b');
+    trigger('c');
+
+    expect(calls).toEqual(['a', 'b', 'c']);
+  });
+
+  it("'effect' should be able to update state (integration)", () => {
+    const incAge = componentStore.updater<number>((state, by) => ({
+      ...state,
+      age: state.age + by,
+    }));
+
+    const trigger = componentStore.effect<number>(source$ => source$.pipe(tap(by => incAge(by))));
+
+    trigger(5);
+
+    expect(componentStore.get().age).toBe(INITIAL_STATE.age + 5);
+  });
 });
