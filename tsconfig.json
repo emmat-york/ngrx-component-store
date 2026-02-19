@@ -22,7 +22,7 @@
     "useDefineForClassFields": false,
     "lib": ["ES2022", "dom"],
     "paths": {
-      "@ngrx-component-store": ["src/component-store/index.ts"]
+      "@ngrx-component-store": ["src/app/component-store/index.ts"]
     }
   },
   "angularCompilerOptions": {

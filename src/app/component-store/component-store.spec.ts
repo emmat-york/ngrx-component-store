@@ -41,6 +41,7 @@ describe('ComponentStore', () => {
 
   it('init state check', () => {
     const initialState = componentStore.get();
+
     expect(initialState).toEqual(INITIAL_STATE);
   });
 
@@ -89,7 +90,12 @@ describe('ComponentStore', () => {
     updaterFn(newValues);
 
     const currentState = componentStore.get();
-    const expectedState: ComponentStoreState = { ...currentState, ...newValues };
+
+    const expectedState: ComponentStoreState = {
+      age: INITIAL_STATE.age,
+      isMarried: INITIAL_STATE.isMarried,
+      ...newValues,
+    };
 
     expect(expectedState).toEqual(currentState);
   });
@@ -132,23 +138,29 @@ describe('ComponentStore', () => {
     componentStore.patchState(partialState);
 
     const currentState = componentStore.get();
-    const expectedState: ComponentStoreState = { ...currentState, ...partialState };
+
+    const expectedState: ComponentStoreState = {
+      age: INITIAL_STATE.age,
+      isMarried: INITIAL_STATE.isMarried,
+      ...partialState,
+    };
 
     expect(expectedState).toEqual(currentState);
   });
 
   it("'patchState with fn' should patch state correctly", () => {
     componentStore.patchState(state => ({
-      ...state,
       name: 'Qui-Gon Jinn',
       car: { brand: state.name, isElectric: true },
     }));
 
     const currentState = componentStore.get();
+
     const expectedState: ComponentStoreState = {
-      ...currentState,
       name: 'Qui-Gon Jinn',
       car: { brand: INITIAL_STATE.name, isElectric: true },
+      age: INITIAL_STATE.age,
+      isMarried: INITIAL_STATE.isMarried,
     };
 
     expect(expectedState).toEqual(currentState);
