@@ -41,9 +41,9 @@ describe('ComponentStore', () => {
   });
 
   it('init state check', () => {
-    const initialState = componentStore.get();
+    const currentState = componentStore.get();
 
-    expect(initialState).toEqual(INITIAL_STATE);
+    expect(currentState).toEqual(INITIAL_STATE);
   });
 
   it("'get with fn' should return correct snapshot", () => {
@@ -101,6 +101,17 @@ describe('ComponentStore', () => {
     expect(expectedState).toEqual(currentState);
   });
 
+  it("'updater' should use latest state on consecutive calls", () => {
+    const inc = componentStore.updater<number>((state, by) => ({ ...state, age: state.age + by }));
+
+    inc(1);
+    inc(2);
+
+    const currentState = componentStore.get();
+
+    expect(currentState.age).toBe(INITIAL_STATE.age + 3);
+  });
+
   it("'setState' should set state correctly", () => {
     const newState: ComponentStoreState = {
       name: 'Han Solo',
@@ -125,6 +136,15 @@ describe('ComponentStore', () => {
     const currentState = componentStore.get();
 
     expect(currentState).toEqual({ ...INITIAL_STATE, age: 41, name: INITIAL_STATE.car.brand });
+  });
+
+  it("'setState(fn)' should use latest state on consecutive calls", () => {
+    componentStore.setState(state => ({ ...state, age: state.age + 1 }));
+    componentStore.setState(state => ({ ...state, age: state.age + 1 }));
+
+    const currentState = componentStore.get();
+
+    expect(currentState.age).toBe(INITIAL_STATE.age + 2);
   });
 
   it("'patchState' should patch state correctly", () => {
@@ -162,6 +182,24 @@ describe('ComponentStore', () => {
       car: { brand: INITIAL_STATE.name, isElectric: true },
       age: INITIAL_STATE.age,
       isMarried: INITIAL_STATE.isMarried,
+    };
+
+    expect(expectedState).toEqual(currentState);
+  });
+
+  it("'patchState' should shallow-merge (nested object replaced)", () => {
+    componentStore.patchState({
+      car: { brand: 'Tesla', isElectric: true },
+    });
+
+    componentStore.patchState(state => ({
+      car: { ...state.car, brand: 'Audi' },
+    }));
+
+    const currentState = componentStore.get();
+    const expectedState = {
+      ...INITIAL_STATE,
+      car: { isElectric: true, brand: 'Audi' },
     };
 
     expect(expectedState).toEqual(currentState);
@@ -230,5 +268,19 @@ describe('ComponentStore', () => {
     trigger(5);
 
     expect(componentStore.get().age).toBe(INITIAL_STATE.age + 5);
+  });
+
+  it("'ngOnDestroy' should complete state$", () => {
+    let completed: boolean = false;
+
+    componentStore['state$'].subscribe({
+      complete: () => {
+        completed = true;
+      },
+    });
+
+    componentStore.ngOnDestroy();
+
+    expect(completed).toBeTrue();
   });
 });
