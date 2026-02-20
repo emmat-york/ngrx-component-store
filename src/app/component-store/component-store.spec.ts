@@ -1,5 +1,5 @@
 import { ComponentStore, INITIAL_STATE_INJECTION_TOKEN } from './component-store';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
 import { Subject, tap } from 'rxjs';
 
 interface ComponentStoreState {
@@ -305,5 +305,68 @@ describe('ComponentStore', () => {
     componentStore.ngOnDestroy();
 
     expect(completed).toBeTrue();
+  });
+
+  describe('select with fn', () => {
+    it('should emit initial selected value immediately', () => {
+      const values: number[] = [];
+
+      componentStore.select(state => state.age).subscribe(v => values.push(v));
+
+      expect(values).toEqual([INITIAL_STATE.age]);
+    });
+
+    it('should emit when selected value changes', () => {
+      const values: number[] = [];
+
+      componentStore.select(state => state.age).subscribe(v => values.push(v));
+
+      componentStore.patchState(state => ({ age: state.age + 1 }));
+      componentStore.patchState({ age: 100 });
+
+      expect(values).toEqual([INITIAL_STATE.age, INITIAL_STATE.age + 1, 100]);
+    });
+
+    it('should NOT emit when selected value does not change (default distinctUntilChanged)', () => {
+      const values: string[] = [];
+
+      componentStore.select(state => state.name).subscribe(v => values.push(v));
+
+      componentStore.patchState({ age: 1 });
+      componentStore.patchState({ age: 2 });
+
+      expect(values).toEqual([INITIAL_STATE.name]);
+    });
+
+    it('should use custom equal comparator', () => {
+      const values: number[] = [];
+
+      componentStore
+        .select(state => state.age, { equal: (a, b) => a > b })
+        .subscribe(v => values.push(v));
+
+      componentStore.patchState({ age: 15 });
+      componentStore.patchState({ age: 40 });
+      componentStore.patchState({ age: 10 });
+      componentStore.patchState({ age: 31 });
+
+      expect(values).toEqual([30, 40]);
+    });
+
+    it('debounce=true should coalesce synchronous updates into one emission (microtask)', fakeAsync(() => {
+      const values: number[] = [];
+
+      componentStore.select(state => state.age, { debounce: true }).subscribe(v => values.push(v));
+
+      componentStore.patchState({ age: 1 });
+      componentStore.patchState({ age: 2 });
+      componentStore.patchState({ age: 3 });
+
+      expect(values).toEqual([]);
+
+      flushMicrotasks();
+
+      expect(values).toEqual([3]);
+    }));
   });
 });

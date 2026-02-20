@@ -1,37 +1,34 @@
-import { MonoTypeOperatorFunction, Observable } from 'rxjs';
+import { asapScheduler, MonoTypeOperatorFunction, Observable, Subscription } from 'rxjs';
 
 export function debounceSync<T>(): MonoTypeOperatorFunction<T> {
-  return (source$: Observable<T>) =>
+  return source =>
     new Observable<T>(observer => {
-      let value: T | undefined;
-      let hasValue = false;
-      let scheduled = false;
-
-      const subscription = source$.subscribe({
-        next: val => {
-          value = val;
-          hasValue = true;
-
-          if (!scheduled) {
-            scheduled = true;
-            queueMicrotask(() => {
-              scheduled = false;
-              if (hasValue) {
-                observer.next(value!);
-                hasValue = false;
-              }
-            });
-          }
-        },
-        error: err => observer.error(err),
-        complete: () => {
-          if (hasValue) {
-            observer.next(value!);
-          }
-          observer.complete();
-        },
-      });
-
-      return () => subscription.unsubscribe();
+      let actionSubscription: Subscription | undefined;
+      let actionValue: T | undefined;
+      const rootSubscription = new Subscription();
+      rootSubscription.add(
+        source.subscribe({
+          complete: () => {
+            if (actionSubscription) {
+              observer.next(actionValue);
+            }
+            observer.complete();
+          },
+          error: error => {
+            observer.error(error);
+          },
+          next: value => {
+            actionValue = value;
+            if (!actionSubscription) {
+              actionSubscription = asapScheduler.schedule(() => {
+                observer.next(actionValue);
+                actionSubscription = undefined;
+              });
+              rootSubscription.add(actionSubscription);
+            }
+          },
+        }),
+      );
+      return rootSubscription;
     });
 }

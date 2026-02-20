@@ -146,9 +146,9 @@ export class ComponentStore<State extends object> implements OnDestroy {
       const [selectFn, config] = collection as [SelectFn, SelectConfig<Output>?];
 
       return this.state$.pipe(
+        config?.debounce ? debounceSync() : identity,
         map(selectFn),
         distinctUntilChanged(config?.equal),
-        config?.debounce ? debounceSync() : identity,
         shareReplay({ bufferSize: 1, refCount: true }),
         takeUntilDestroyed(this.destroyRef),
       );
