@@ -41,7 +41,7 @@ describe('ComponentStore', () => {
       expect(componentStore).toBeDefined();
     });
 
-    it('init state check', () => {
+    it('initial state', () => {
       const currentState = componentStore.get();
 
       expect(currentState).toEqual(INITIAL_STATE);
@@ -307,8 +307,8 @@ describe('ComponentStore', () => {
     expect(completed).toBeTrue();
   });
 
-  describe('select with fn', () => {
-    it('should emit initial selected value immediately', () => {
+  describe('select(fn)', () => {
+    it("'select(fn)' should emit initial selected value immediately", () => {
       const values: number[] = [];
 
       componentStore.select(state => state.age).subscribe(v => values.push(v));
@@ -316,7 +316,7 @@ describe('ComponentStore', () => {
       expect(values).toEqual([INITIAL_STATE.age]);
     });
 
-    it('should emit when selected value changes', () => {
+    it("'select(fn)' should emit when selected value changes", () => {
       const values: number[] = [];
 
       componentStore.select(state => state.age).subscribe(v => values.push(v));
@@ -327,7 +327,7 @@ describe('ComponentStore', () => {
       expect(values).toEqual([INITIAL_STATE.age, INITIAL_STATE.age + 1, 100]);
     });
 
-    it('should NOT emit when selected value does not change (default distinctUntilChanged)', () => {
+    it("'select(fn)' should NOT emit when selected value does not change (default distinctUntilChanged)", () => {
       const values: string[] = [];
 
       componentStore.select(state => state.name).subscribe(v => values.push(v));
@@ -338,7 +338,7 @@ describe('ComponentStore', () => {
       expect(values).toEqual([INITIAL_STATE.name]);
     });
 
-    it('should use custom equal comparator', () => {
+    it("'select(fn)' should use custom equal comparator", () => {
       const values: number[] = [];
 
       componentStore
@@ -353,7 +353,7 @@ describe('ComponentStore', () => {
       expect(values).toEqual([30, 40]);
     });
 
-    it('debounce=true should coalesce synchronous updates into one emission (microtask)', fakeAsync(() => {
+    it("'select(fn)' debounce=true should coalesce synchronous updates into one emission (microtask)", fakeAsync(() => {
       const values: number[] = [];
 
       componentStore.select(state => state.age, { debounce: true }).subscribe(v => values.push(v));
@@ -369,7 +369,7 @@ describe('ComponentStore', () => {
       expect(values).toEqual([3]);
     }));
 
-    it('debounce=true should emit initial value after microtask if no sync updates happen', fakeAsync(() => {
+    it("'select(fn)' debounce=true should emit initial value after microtask if no sync updates happen", fakeAsync(() => {
       const values: number[] = [];
 
       componentStore.select(s => s.age, { debounce: true }).subscribe(v => values.push(v));
@@ -381,7 +381,7 @@ describe('ComponentStore', () => {
       expect(values).toEqual([INITIAL_STATE.age]);
     }));
 
-    it('debounce=true should emit again on later async update (two microtasks)', fakeAsync(() => {
+    it("'select(fn)' debounce=true should emit again on later async update (two microtasks)", fakeAsync(() => {
       const values: number[] = [];
 
       componentStore.select(s => s.age, { debounce: true }).subscribe(v => values.push(v));
@@ -398,7 +398,7 @@ describe('ComponentStore', () => {
       expect(values).toEqual([INITIAL_STATE.age, 99]);
     }));
 
-    it('should replay last selected value to late subscribers (shareReplay)', () => {
+    it("'select(fn)' should replay last selected value to late subscribers (shareReplay)", () => {
       const a: number[] = [];
       const b: number[] = [];
 
@@ -414,7 +414,7 @@ describe('ComponentStore', () => {
       expect(b).toEqual([42]);
     });
 
-    it('should resubscribe correctly after all subscribers unsubscribed (refCount)', () => {
+    it("'select(fn)' should resubscribe correctly after all subscribers unsubscribed (refCount)", () => {
       const values: number[] = [];
 
       const age$ = componentStore.select(s => s.age);
@@ -431,7 +431,7 @@ describe('ComponentStore', () => {
       expect(values).toEqual([INITIAL_STATE.age, 77]);
     });
 
-    it('should complete selector on store destroy', () => {
+    it("'select(fn)' should complete selector on store destroy", () => {
       let completed: boolean = false;
 
       componentStore
