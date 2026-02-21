@@ -142,7 +142,9 @@ export class ComponentStore<State extends object> implements OnDestroy {
           config: SelectConfig<Output>,
         ]
   ) {
-    if (typeof collection.at(0) === 'function') {
+    const first = collection.at(0);
+
+    if (typeof first === 'function') {
       const [selectFn, config] = collection as [SelectFn, SelectConfig<Output>?];
 
       return this.state$.pipe(
@@ -152,9 +154,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
         shareReplay({ bufferSize: 1, refCount: true }),
         takeUntilDestroyed(this.destroyRef),
       );
-    }
-
-    if (isObservable(collection.at(0))) {
+    } else if (isObservable(first)) {
       const last = collection.at(-1);
       const hasConfig = isSelectConfig<Output>(last);
       const config = hasConfig ? last : undefined;
@@ -163,7 +163,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
 
       const selectors = (
         hasConfig ? collection.slice(0, -2) : collection.slice(0, -1)
-      ) as Observable<unknown>[];
+      ) as Selectors;
 
       return combineLatest(selectors).pipe(
         map(values => projector(...(values as SelectorsResult<Selectors>))),
@@ -172,16 +172,19 @@ export class ComponentStore<State extends object> implements OnDestroy {
         shareReplay({ bufferSize: 1, refCount: true }),
         takeUntilDestroyed(this.destroyRef),
       );
+    } else {
+      const [vm, config] = collection as [
+        SelectorsObject,
+        SelectConfig<ViewModel<SelectorsObject>>?,
+      ];
+
+      return combineLatest(vm).pipe(
+        distinctUntilChanged(config?.equal),
+        config?.debounce ? debounceSync() : identity,
+        shareReplay({ bufferSize: 1, refCount: true }),
+        takeUntilDestroyed(this.destroyRef),
+      );
     }
-
-    const [vm, config] = collection as [SelectorsObject, SelectConfig<ViewModel<SelectorsObject>>?];
-
-    return combineLatest(vm).pipe(
-      distinctUntilChanged(config?.equal),
-      config?.debounce ? debounceSync() : identity,
-      shareReplay({ bufferSize: 1, refCount: true }),
-      takeUntilDestroyed(this.destroyRef),
-    );
   }
 
   get(): State;

@@ -49,7 +49,7 @@ describe('ComponentStore', () => {
   });
 
   describe('get', () => {
-    it("'get with fn' should return correct snapshot", () => {
+    it("'get(fn)' should return correct snapshot", () => {
       const partialState = {
         name: 'Emmat',
         car: { brand: 'Tesla', isElectric: true },
@@ -223,7 +223,7 @@ describe('ComponentStore', () => {
       const calls: string[] = [];
 
       const trigger = componentStore.effect<string>(source$ =>
-        source$.pipe(tap(v => calls.push(v))),
+        source$.pipe(tap(value => calls.push(value))),
       );
 
       trigger('hello');
@@ -235,7 +235,7 @@ describe('ComponentStore', () => {
       const calls: number[] = [];
 
       const trigger = componentStore.effect<number>(source$ =>
-        source$.pipe(tap(v => calls.push(v))),
+        source$.pipe(tap(value => calls.push(value))),
       );
 
       const input$ = new Subject<number>();
@@ -252,7 +252,7 @@ describe('ComponentStore', () => {
       const calls: number[] = [];
 
       const trigger = componentStore.effect<number>(source$ =>
-        source$.pipe(tap(v => calls.push(v))),
+        source$.pipe(tap(value => calls.push(value))),
       );
 
       const input$ = new Subject<number>();
@@ -269,7 +269,7 @@ describe('ComponentStore', () => {
       const calls: string[] = [];
 
       const trigger = componentStore.effect<string>(source$ =>
-        source$.pipe(tap(v => calls.push(v))),
+        source$.pipe(tap(value => calls.push(value))),
       );
 
       trigger('a');
@@ -311,7 +311,7 @@ describe('ComponentStore', () => {
     it("'select(fn)' should emit initial selected value immediately", () => {
       const values: number[] = [];
 
-      componentStore.select(state => state.age).subscribe(v => values.push(v));
+      componentStore.select(state => state.age).subscribe(value => values.push(value));
 
       expect(values).toEqual([INITIAL_STATE.age]);
     });
@@ -319,7 +319,7 @@ describe('ComponentStore', () => {
     it("'select(fn)' should emit when selected value changes", () => {
       const values: number[] = [];
 
-      componentStore.select(state => state.age).subscribe(v => values.push(v));
+      componentStore.select(state => state.age).subscribe(value => values.push(value));
 
       componentStore.patchState(state => ({ age: state.age + 1 }));
       componentStore.patchState({ age: 100 });
@@ -330,7 +330,7 @@ describe('ComponentStore', () => {
     it("'select(fn)' should NOT emit when selected value does not change (default distinctUntilChanged)", () => {
       const values: string[] = [];
 
-      componentStore.select(state => state.name).subscribe(v => values.push(v));
+      componentStore.select(state => state.name).subscribe(value => values.push(value));
 
       componentStore.patchState({ age: 1, car: { brand: 'TOYOTA', isElectric: true } });
       componentStore.patchState({ age: 2 });
@@ -343,7 +343,7 @@ describe('ComponentStore', () => {
 
       componentStore
         .select(state => state.age, { equal: (a, b) => a > b })
-        .subscribe(v => values.push(v));
+        .subscribe(value => values.push(value));
 
       componentStore.patchState({ age: 15 });
       componentStore.patchState({ age: 40 });
@@ -356,7 +356,9 @@ describe('ComponentStore', () => {
     it("'select(fn)' debounce=true should coalesce synchronous updates into one emission (microtask)", fakeAsync(() => {
       const values: number[] = [];
 
-      componentStore.select(state => state.age, { debounce: true }).subscribe(v => values.push(v));
+      componentStore
+        .select(state => state.age, { debounce: true })
+        .subscribe(value => values.push(value));
 
       componentStore.patchState({ age: 1 });
       componentStore.patchState({ age: 2 });
@@ -372,7 +374,9 @@ describe('ComponentStore', () => {
     it("'select(fn)' debounce=true should emit initial value after microtask if no sync updates happen", fakeAsync(() => {
       const values: number[] = [];
 
-      componentStore.select(s => s.age, { debounce: true }).subscribe(v => values.push(v));
+      componentStore
+        .select(state => state.age, { debounce: true })
+        .subscribe(value => values.push(value));
 
       expect(values).toEqual([]); // initial debounced
 
@@ -384,7 +388,9 @@ describe('ComponentStore', () => {
     it("'select(fn)' debounce=true should emit again on later async update (two microtasks)", fakeAsync(() => {
       const values: number[] = [];
 
-      componentStore.select(s => s.age, { debounce: true }).subscribe(v => values.push(v));
+      componentStore
+        .select(state => state.age, { debounce: true })
+        .subscribe(value => values.push(value));
 
       flushMicrotasks();
       expect(values).toEqual([INITIAL_STATE.age]);
@@ -393,6 +399,7 @@ describe('ComponentStore', () => {
 
       // new tick -> debounce again
       expect(values).toEqual([INITIAL_STATE.age]);
+
       flushMicrotasks();
 
       expect(values).toEqual([INITIAL_STATE.age, 99]);
@@ -402,13 +409,12 @@ describe('ComponentStore', () => {
       const a: number[] = [];
       const b: number[] = [];
 
-      const age$ = componentStore.select(s => s.age);
+      const age$ = componentStore.select(state => state.age);
 
-      age$.subscribe(v => a.push(v));
+      age$.subscribe(value => a.push(value));
       componentStore.patchState({ age: 42 });
 
-      // Late subscription should immediately receive 42
-      age$.subscribe(v => b.push(v));
+      age$.subscribe(value => b.push(value)); // Late subscription should immediately receive 42
 
       expect(a).toEqual([INITIAL_STATE.age, 42]);
       expect(b).toEqual([42]);
@@ -417,16 +423,14 @@ describe('ComponentStore', () => {
     it("'select(fn)' should resubscribe correctly after all subscribers unsubscribed (refCount)", () => {
       const values: number[] = [];
 
-      const age$ = componentStore.select(s => s.age);
+      const age$ = componentStore.select(state => state.age);
 
-      const sub = age$.subscribe(v => values.push(v));
+      const sub = age$.subscribe(value => values.push(value));
       sub.unsubscribe();
 
-      // change the state while no one is subscribed
-      componentStore.patchState({ age: 77 });
+      componentStore.patchState({ age: 77 }); // change the state while no one is subscribed
 
-      // the new subscription should receive the current value 77
-      age$.subscribe(v => values.push(v));
+      age$.subscribe(value => values.push(value)); // the new subscription should receive the current value 77
 
       expect(values).toEqual([INITIAL_STATE.age, 77]);
     });
@@ -435,12 +439,127 @@ describe('ComponentStore', () => {
       let completed: boolean = false;
 
       componentStore
-        .select(s => s.age)
+        .select(state => state.age)
         .subscribe({
           complete: () => {
             completed = true;
           },
         });
+
+      componentStore.ngOnDestroy();
+
+      expect(completed).toBeTrue();
+    });
+  });
+
+  describe('select(vm)', () => {
+    it("'select(vm)' should emit initial view model", () => {
+      const values: Array<{ name: string; age: number }> = [];
+
+      const name$ = componentStore.select(state => state.name);
+      const age$ = componentStore.select(state => state.age);
+
+      componentStore.select({ name: name$, age: age$ }).subscribe(vm => values.push(vm));
+
+      expect(values).toEqual([{ name: INITIAL_STATE.name, age: INITIAL_STATE.age }]);
+    });
+
+    it("'select(vm)' should emit when any selector emits (updates one field)", () => {
+      const values: Array<{ name: string; age: number }> = [];
+
+      const name$ = componentStore.select(state => state.name);
+      const age$ = componentStore.select(state => state.age);
+
+      componentStore.select({ name: name$, age: age$ }).subscribe(vm => values.push(vm));
+
+      componentStore.patchState({ age: 99 });
+
+      expect(values).toEqual([
+        { name: INITIAL_STATE.name, age: INITIAL_STATE.age },
+        { name: INITIAL_STATE.name, age: 99 },
+      ]);
+    });
+
+    it("'select(vm)' debounce=true should coalesce multiple synchronous selector emissions into one vm emission", fakeAsync(() => {
+      const values: Array<{ name: string; age: number }> = [];
+
+      const name$ = componentStore.select(state => state.name);
+      const age$ = componentStore.select(state => state.age);
+
+      componentStore
+        .select({ name: name$, age: age$ }, { debounce: true })
+        .subscribe(vm => values.push(vm));
+
+      componentStore.patchState({ age: 1 });
+      componentStore.patchState({ age: 2 });
+      componentStore.patchState({ age: 3 });
+
+      expect(values).toEqual([]); // debounceSync holds emit until microtask
+
+      flushMicrotasks();
+
+      expect(values).toEqual([{ name: INITIAL_STATE.name, age: 3 }]);
+    }));
+
+    it("'select(vm)' should replay last vm to late subscribers (shareReplay)", () => {
+      const a: Array<{ name: string; age: number }> = [];
+      const b: Array<{ name: string; age: number }> = [];
+
+      const name$ = componentStore.select(state => state.name);
+      const age$ = componentStore.select(state => state.age);
+
+      const vm$ = componentStore.select({ name: name$, age: age$ });
+
+      vm$.subscribe(vm => a.push(vm));
+
+      componentStore.patchState({ age: 42 });
+
+      vm$.subscribe(vm => b.push(vm)); // A late subscription should receive the latest immediately.
+
+      expect(a).toEqual([
+        { name: INITIAL_STATE.name, age: INITIAL_STATE.age },
+        { name: INITIAL_STATE.name, age: 42 },
+      ]);
+
+      expect(b).toEqual([{ name: INITIAL_STATE.name, age: 42 }]);
+    });
+
+    it("'select(vm)' should use custom equal comparator to prevent emissions when vm values are equal", () => {
+      const values: Array<{ name: string; age: number }> = [];
+
+      const name$ = componentStore.select(state => state.name);
+      const age$ = componentStore.select(state => state.age);
+
+      // shallowEqual by fields
+      const equal = (a: { name: string; age: number }, b: { name: string; age: number }) =>
+        a.name === b.name && a.age === b.age;
+
+      componentStore.select({ name: name$, age: age$ }, { equal }).subscribe(vm => values.push(vm));
+
+      // 1) change age -> emission
+      componentStore.patchState({ age: 31 });
+
+      // 2) patch with the same value -> the leaf selector age$ doesn't emit (distinctUntilChanged),
+      // but even if it did emit, equal will protect against unnecessary vm-emission.
+      componentStore.patchState({ age: 31 });
+
+      expect(values).toEqual([
+        { name: INITIAL_STATE.name, age: INITIAL_STATE.age },
+        { name: INITIAL_STATE.name, age: 31 },
+      ]);
+    });
+
+    it("'select(vm)' should complete vm selector on store destroy", () => {
+      let completed: boolean = false;
+
+      const name$ = componentStore.select(state => state.name);
+      const age$ = componentStore.select(state => state.age);
+
+      componentStore.select({ name: name$, age: age$ }).subscribe({
+        complete: () => {
+          completed = true;
+        },
+      });
 
       componentStore.ngOnDestroy();
 
