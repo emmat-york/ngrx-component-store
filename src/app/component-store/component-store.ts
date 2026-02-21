@@ -166,9 +166,9 @@ export class ComponentStore<State extends object> implements OnDestroy {
       ) as Selectors;
 
       return combineLatest(selectors).pipe(
+        config?.debounce ? debounceSync() : identity,
         map(values => projector(...(values as SelectorsResult<Selectors>))),
         distinctUntilChanged(config?.equal),
-        config?.debounce ? debounceSync() : identity,
         shareReplay({ bufferSize: 1, refCount: true }),
         takeUntilDestroyed(this.destroyRef),
       );
@@ -179,8 +179,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
       ];
 
       return combineLatest(vm).pipe(
-        distinctUntilChanged(config?.equal),
         config?.debounce ? debounceSync() : identity,
+        distinctUntilChanged(config?.equal),
         shareReplay({ bufferSize: 1, refCount: true }),
         takeUntilDestroyed(this.destroyRef),
       );

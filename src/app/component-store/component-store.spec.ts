@@ -566,4 +566,168 @@ describe('ComponentStore', () => {
       expect(completed).toBeTrue();
     });
   });
+
+  describe('select(...selectors, projector)', () => {
+    it("'select(...selectors, projector)' should emit initial projector result", () => {
+      const values: string[] = [];
+
+      const name$ = componentStore.select(state => state.name);
+      const age$ = componentStore.select(state => state.age);
+
+      componentStore
+        .select(name$, age$, (name, age) => `${name}:${age}`)
+        .subscribe(value => values.push(value));
+
+      expect(values).toEqual([`${INITIAL_STATE.name}:${INITIAL_STATE.age}`]);
+    });
+
+    it("'select(...selectors, projector)' should emit when any input selector changes (no config)", () => {
+      const values: number[] = [];
+
+      const age$ = componentStore.select(state => state.age);
+      const married$ = componentStore.select(state => state.isMarried);
+
+      componentStore
+        .select(age$, married$, (age, married) => (married ? age * 2 : age))
+        .subscribe(value => values.push(value));
+
+      componentStore.patchState({ age: 31 });
+      componentStore.patchState({ isMarried: true });
+
+      expect(values).toEqual([INITIAL_STATE.age, 31, 62]);
+    });
+
+    it("'select(...selectors, projector)' should NOT emit when projector result is strictly equal (default distinctUntilChanged)", () => {
+      const values: boolean[] = [];
+
+      const married$ = componentStore.select(state => state.isMarried);
+      const age$ = componentStore.select(state => state.age);
+
+      // projector depends only on married, age is ignored
+      componentStore
+        .select(married$, age$, married => married)
+        .subscribe(value => values.push(value));
+
+      componentStore.patchState({ age: 999 }); // projector result does not change
+      componentStore.patchState({ age: 1000 });
+
+      expect(values).toEqual([INITIAL_STATE.isMarried]);
+    });
+
+    it("'select(...selectors, projector)' should use custom equal comparator (same decade treated as equal)", () => {
+      const values: number[] = [];
+
+      const age$ = componentStore.select(state => state.age);
+
+      componentStore
+        .select(age$, age => age, {
+          equal: (a: number, b: number) => Math.floor(a / 10) === Math.floor(b / 10),
+        })
+        .subscribe(value => values.push(value));
+
+      componentStore.patchState({ age: 31 });
+      componentStore.patchState({ age: 35 });
+      componentStore.patchState({ age: 42 });
+
+      expect(values).toEqual([30, 42]);
+    });
+
+    it("'select(...selectors, projector)' debounce=true should coalesce synchronous updates into one emission (microtask)", fakeAsync(() => {
+      const values: number[] = [];
+
+      const age$ = componentStore.select(state => state.age);
+      const other$ = componentStore.select(state => state.name.length); // any second selector
+
+      componentStore
+        .select(age$, other$, age => age, { debounce: true })
+        .subscribe(value => values.push(value));
+
+      componentStore.patchState({ age: 1 });
+      componentStore.patchState({ age: 2 });
+      componentStore.patchState({ age: 3 });
+
+      expect(values).toEqual([]); // because of debounceSync after map - nothing out yet
+
+      flushMicrotasks();
+
+      expect(values).toEqual([3]);
+    }));
+
+    it("'select(...selectors, projector)' debounce=true: projector may run multiple times, but output emits once (optional behavior check)", fakeAsync(() => {
+      let projectorCalls: number = 0;
+      const values: number[] = [];
+
+      const age$ = componentStore.select(state => state.age);
+
+      componentStore
+        .select(
+          age$,
+          age => {
+            projectorCalls++;
+            return age;
+          },
+          { debounce: true },
+        )
+        .subscribe(value => values.push(value));
+
+      componentStore.patchState({ age: 1 });
+      componentStore.patchState({ age: 2 });
+      componentStore.patchState({ age: 3 });
+
+      flushMicrotasks();
+
+      expect(values).toEqual([3]);
+
+      // projectorCalls can be > 1 because debounce comes after map
+      expect(projectorCalls).toBeGreaterThanOrEqual(1);
+    }));
+
+    it("'select(...selectors, projector)' should treat empty object {} as config (isSelectConfig) and still work", () => {
+      const values: number[] = [];
+
+      const age$ = componentStore.select(state => state.age);
+
+      // {} goes into the config branch, projector should be the second-to-last argument
+      componentStore.select(age$, age => age + 1, {} as any).subscribe(value => values.push(value));
+
+      expect(values).toEqual([INITIAL_STATE.age + 1]);
+    });
+
+    it("'select(...selectors, projector)' should replay last result to late subscribers (shareReplay)", () => {
+      const a: number[] = [];
+      const b: number[] = [];
+
+      const age$ = componentStore.select(state => state.age);
+      const married$ = componentStore.select(state => state.isMarried);
+
+      const result$ = componentStore.select(age$, married$, (age, married) => (married ? age : 0));
+
+      result$.subscribe(value => a.push(value));
+
+      componentStore.patchState({ isMarried: true });
+
+      result$.subscribe(value => b.push(value));
+
+      expect(a).toEqual([0, INITIAL_STATE.age]);
+      expect(b).toEqual([INITIAL_STATE.age]);
+    });
+
+    it("'select(...selectors, projector)' should complete selector on store destroy", () => {
+      let completed: boolean = false;
+
+      const age$ = componentStore.select(state => state.age);
+
+      componentStore
+        .select(age$, age => age)
+        .subscribe({
+          complete: () => {
+            completed = true;
+          },
+        });
+
+      componentStore.ngOnDestroy();
+
+      expect(completed).toBeTrue();
+    });
+  });
 });
