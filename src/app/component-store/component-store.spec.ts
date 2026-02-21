@@ -332,7 +332,7 @@ describe('ComponentStore', () => {
 
       componentStore.select(state => state.name).subscribe(v => values.push(v));
 
-      componentStore.patchState({ age: 1 });
+      componentStore.patchState({ age: 1, car: { brand: 'TOYOTA', isElectric: true } });
       componentStore.patchState({ age: 2 });
 
       expect(values).toEqual([INITIAL_STATE.name]);
@@ -368,5 +368,83 @@ describe('ComponentStore', () => {
 
       expect(values).toEqual([3]);
     }));
+
+    it('debounce=true should emit initial value after microtask if no sync updates happen', fakeAsync(() => {
+      const values: number[] = [];
+
+      componentStore.select(s => s.age, { debounce: true }).subscribe(v => values.push(v));
+
+      expect(values).toEqual([]); // initial debounced
+
+      flushMicrotasks();
+
+      expect(values).toEqual([INITIAL_STATE.age]);
+    }));
+
+    it('debounce=true should emit again on later async update (two microtasks)', fakeAsync(() => {
+      const values: number[] = [];
+
+      componentStore.select(s => s.age, { debounce: true }).subscribe(v => values.push(v));
+
+      flushMicrotasks();
+      expect(values).toEqual([INITIAL_STATE.age]);
+
+      componentStore.patchState({ age: 99 });
+
+      // new tick -> debounce again
+      expect(values).toEqual([INITIAL_STATE.age]);
+      flushMicrotasks();
+
+      expect(values).toEqual([INITIAL_STATE.age, 99]);
+    }));
+
+    it('should replay last selected value to late subscribers (shareReplay)', () => {
+      const a: number[] = [];
+      const b: number[] = [];
+
+      const age$ = componentStore.select(s => s.age);
+
+      age$.subscribe(v => a.push(v));
+      componentStore.patchState({ age: 42 });
+
+      // Late subscription should immediately receive 42
+      age$.subscribe(v => b.push(v));
+
+      expect(a).toEqual([INITIAL_STATE.age, 42]);
+      expect(b).toEqual([42]);
+    });
+
+    it('should resubscribe correctly after all subscribers unsubscribed (refCount)', () => {
+      const values: number[] = [];
+
+      const age$ = componentStore.select(s => s.age);
+
+      const sub = age$.subscribe(v => values.push(v));
+      sub.unsubscribe();
+
+      // change the state while no one is subscribed
+      componentStore.patchState({ age: 77 });
+
+      // the new subscription should receive the current value 77
+      age$.subscribe(v => values.push(v));
+
+      expect(values).toEqual([INITIAL_STATE.age, 77]);
+    });
+
+    it('should complete selector on store destroy', () => {
+      let completed: boolean = false;
+
+      componentStore
+        .select(s => s.age)
+        .subscribe({
+          complete: () => {
+            completed = true;
+          },
+        });
+
+      componentStore.ngOnDestroy();
+
+      expect(completed).toBeTrue();
+    });
   });
 });
