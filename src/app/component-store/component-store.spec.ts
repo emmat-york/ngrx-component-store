@@ -140,7 +140,7 @@ describe('ComponentStore', () => {
       expect(newState).toEqual(result);
     });
 
-    it("'setState with fn' should set state correctly", () => {
+    it("'setState(fn)' should set state correctly", () => {
       componentStore.setState(state => ({ ...state, age: 41, name: state.car.brand }));
 
       const currentState = componentStore.get();
@@ -181,7 +181,7 @@ describe('ComponentStore', () => {
       expect(expectedState).toEqual(currentState);
     });
 
-    it("'patchState with fn' should patch state correctly", () => {
+    it("'patchState(fn)' should patch state correctly", () => {
       componentStore.patchState(state => ({
         name: 'Qui-Gon Jinn',
         car: { brand: state.name, isElectric: true },
