@@ -145,6 +145,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
     const first = collection.at(0);
 
     if (typeof first === 'function') {
+      // selector$ = this.select(state => Output, config?: SelectConfig<Output>);
       const [selectFn, config] = collection as [SelectFn, SelectConfig<Output>?];
 
       return this.state$.pipe(
@@ -155,6 +156,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
         takeUntilDestroyed(this.destroyRef),
       );
     } else if (isObservable(first)) {
+      // projector$ = this.select(selector$, selector2$, (value, value2) => Output, config?: SelectConfig<Output>);
       const last = collection.at(-1);
       const hasConfig = isSelectConfig<Output>(last);
       const config = hasConfig ? last : undefined;
@@ -173,6 +175,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
         takeUntilDestroyed(this.destroyRef),
       );
     } else {
+      // vm$ = this.select({ prop: selector$, prop2: selector2$ }, config?: SelectConfig<Output>);
       const [vm, config] = collection as [
         SelectorsObject,
         SelectConfig<ViewModel<SelectorsObject>>?,
