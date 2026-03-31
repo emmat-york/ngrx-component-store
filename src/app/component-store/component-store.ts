@@ -86,8 +86,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @description This method selects a specific part of the state using the provided selector function.
    * @param selectFn A selector function that accepts the current state and returns an
    * Observable of the selected store's part.
-   * @param config An optional object that allows controlling the frequency of value emissions in the select,
-   * preventing excessive notifications during rapid state updates.
+   * @param config Optional configuration object that controls how values are emitted.
+   * It can be used to debounce emissions and customize equality checks to avoid unnecessary updates.
    * @return An Observable that emits the selected value.
    **/
   select<Output>(
@@ -99,8 +99,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @description This method selects multiple parts of the state using the provided selectors
    * and returns a combined observable that emits a view model.
    * @param selectors An object whose key values are store's selectors.
-   * @param config An optional object that allows controlling the frequency of value emissions in the select,
-   * preventing excessive notifications during rapid state updates.
+   * @param config Optional configuration object that controls how values are emitted.
+   * It can be used to debounce emissions and customize equality checks to avoid unnecessary updates.
    * @return An Observable which emits an object whose properties are the values returned by each selector in `selectors`.
    **/
   select<Selectors extends Record<string, Observable<unknown>>>(
@@ -114,6 +114,8 @@ export class ComponentStore<State extends object> implements OnDestroy {
    * @param selectorsWithProjector A tuple of selectors and a selector function:
    *  - `selectors`: An array of observables that select different parts of the state;
    *  - `projector`: A function that takes the results of all the selectors and returns a combined output.
+   *  - `config`: Optional configuration object that controls how values are emitted.
+   * It can be used to debounce emissions and customize equality checks to avoid unnecessary updates.
    * @return An Observable that emits the result of the `selectFn` applied to the selected state parts.
    **/
   select<Selectors extends Observable<unknown>[], Output>(
