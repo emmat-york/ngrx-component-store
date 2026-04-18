@@ -144,7 +144,7 @@ export class ComponentStore<State extends object> implements OnDestroy {
           config: SelectConfig<Output>,
         ]
   ) {
-    const first = collection.at(0);
+    const first = collection.at(0); // Extracting the first function's parameter
 
     if (typeof first === 'function') {
       // selector$ = this.select(state => Output, config?: SelectConfig<Output>);
@@ -159,9 +159,10 @@ export class ComponentStore<State extends object> implements OnDestroy {
       );
     } else if (isObservable(first)) {
       // projector$ = this.select(selector$, selector2$, (value, value2) => Output, config?: SelectConfig<Output>);
-      const last = collection.at(-1);
-      const hasConfig = isSelectConfig<Output>(last);
-      const config = hasConfig ? last : undefined;
+
+      const last = collection.at(-1); // Extraction the last function's parameter;
+      const hasConfig = isSelectConfig<Output>(last); // Defining is the last function's parameter SelectConfig object or not;
+      const config = hasConfig ? last : undefined; // Defining config
 
       const projector = (hasConfig ? collection.at(-2) : last) as ProjectorFn<Selectors, Output>;
 
